@@ -1,0 +1,9 @@
+# پوشه‌های نصب شده
+node_modules/
+
+# فایل تنظیمات حساس
+.env
+
+# فایل‌های موقت
+npm-debug.log
+.DS_Store
