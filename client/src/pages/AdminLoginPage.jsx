@@ -1,4 +1,3 @@
-// src/pages/AdminLoginPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
@@ -19,7 +18,6 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      // چک کردن نقش ادمین
       if (data.user.role !== 'admin') {
         throw new Error('دسترسی ادمین مورد نیاز است.');
       }
