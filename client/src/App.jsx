@@ -8,6 +8,7 @@ import { addToCart } from './services/cartService';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 
+// کامپوننت داخلی که داخل HashRouter استفاده می‌شه
 function AppContent() {
   const [products, setProducts] = useState([]);
   const [cartCount, setCartCount] = useState(0);
@@ -52,7 +53,7 @@ function AppContent() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/admin/login" element={<AdminLoginPage />} />
-<Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         <Route
           path="/"
           element={
@@ -83,11 +84,12 @@ function AppContent() {
   );
 }
 
+// کامپوننت اصلی
 function App() {
   return (
     <HashRouter>
-  <AppContent />
-</HashRouter>
+      <AppContent />
+    </HashRouter>
   );
 }
 
