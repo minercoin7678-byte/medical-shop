@@ -16,5 +16,5 @@ app.get('/', (req, res) => {
 
 // شروع سرور
 app.listen(PORT, () => {
-  console.log( سرور روی پورت ${PORT} در حال اجراست...);
+  console.log(' سرور روی پورت ${PORT} در حال اجراست...');
 });
