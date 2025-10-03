@@ -1,5 +1,5 @@
 // src/services/api.js
-const API_BASE_URL = 'https://medical-shop.onrender.com/api'; // به خاطر proxy در vite.config.js
+const API_BASE_URL = 'https://medical-shop-backend-v1u1.onrender.com'; // به خاطر proxy در vite.config.js
 
 // تابع کمکی برای ارسال درخواست با توکن (اگر وجود داشت)
 const api = async (endpoint, options = {}) => {
