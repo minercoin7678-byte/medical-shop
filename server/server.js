@@ -20,11 +20,11 @@ app.use(helmet());
 app.use(express.json());
 
 // محدودیت تعداد درخواست‌ها برای لاگین
-//const loginLimiter = rateLimit({
-  //windowMs: 15 * 60 * 1000, // 15 دقیقه
- // max: 5, // حداکثر 5 بار
- // message: 'تعداد درخواست‌های شما بیش از حد مجاز است.'
-//});
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 دقیقه
+  max: 5, // حداکثر 5 بار
+  message: 'تعداد درخواست‌های شما بیش از حد مجاز است.'
+});
 app.use('/api/login', loginLimiter);
 
 // ⚠️ مسیرها رو بعد از CORS و موارد اولیه تعریف کن
