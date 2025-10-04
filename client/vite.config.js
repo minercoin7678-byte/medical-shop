@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://medical-shop-backend-v1u1.onrender.com', // ⚠️ بدون فاصله
+        target:'https://medical-shop-backend-v1u1.onrender.com', // ⚠️ بدون فاصله
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api'), // ⚠️ این خط رو اضافه کن
       }

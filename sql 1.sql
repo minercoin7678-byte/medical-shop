@@ -53,3 +53,12 @@ INSERT INTO faqs (question, answer) VALUES
 ('آیا محصولات شما اصل هستند؟', 'بله، تمام محصولات ما از برندهای معتبر و با گارانتی اصالت عرضه می‌شوند.'),
 ('چگونه می‌توانم سفارش خود را پیگیری کنم؟', 'پس از ثبت سفارش، کد رهگیری به ایمیل و پیامک شما ارسال می‌شود. همچنین می‌توانید از داشبورد کاربری خود سفارشات را مشاهده کنید.'),
 ('آیا امکان بازگشت کالا وجود دارد؟', 'در صورت معیوب بودن کالا، تا ۷ روز پس از دریافت، امکان بازگشت وجود دارد.');
+CREATE TABLE IF NOT EXISTS users (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(150) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  phone VARCHAR(20),
+  address TEXT,
+  role VARCHAR(20) DEFAULT 'user'
+);
