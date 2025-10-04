@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     'http://localhost:5173', // برای توسعه
-    'https://medical-shop-qnok2y25b-amirs-projects-43cfa8db.vercel.app' // ✅ آدرس Vercel — بدون https:// تکراری و بدون فاصله
+    'https://medical-shop-la5we7ceh-amirs-projects-43cfa8db.vercel.app/' // ✅ آدرس Vercel — بدون https:// تکراری و بدون فاصله
   ],
   credentials: true
 }));
