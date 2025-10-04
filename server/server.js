@@ -7,10 +7,20 @@ const rateLimit = require('express-rate-limit');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json());
+// ⚠️ اول CORS رو تنظیم کن — قبل از هر چیزی
+app.use(cors({
+  origin: [
+    'http://localhost:5173', // برای توسعه
+    'https://medical-shop-qnok2y25b-amirs-projects-43cfa8db.vercel.app' // ✅ آدرس Vercel — بدون https:// تکراری و بدون فاصله
+  ],
+  credentials: true
+}));
+
 // امنیت HTTP
 app.use(helmet());
+
+// پارس کردن JSON
+app.use(express.json());
 
 // محدودیت تعداد درخواست‌ها برای لاگین
 const loginLimiter = rateLimit({
@@ -20,7 +30,7 @@ const loginLimiter = rateLimit({
 });
 app.use('/api/login', loginLimiter);
 
-// ⚠️ ترتیب مهمه: اول /api، بعد /api/products
+// ⚠️ مسیرها رو بعد از CORS و موارد اولیه تعریف کن
 const userRoutes = require('./routes/userRoutes');
 app.use('/api', userRoutes);
 
@@ -39,11 +49,12 @@ app.use('/api/orders', orderRoutes);
 const supportRoutes = require('./routes/supportRoutes');
 app.use('/api/support', supportRoutes);
 
+// صفحهٔ اصلی
 app.get('/', (req, res) => {
   res.send('Medical Shop Server is ready!');
 });
 
+// راه‌اندازی سرور
 app.listen(PORT, () => {
   console.log('Server is running on port ' + PORT + '...');
 });
-
