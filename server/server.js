@@ -9,10 +9,7 @@ const PORT = process.env.PORT || 5000;
 
 // ⚠️ اول CORS رو تنظیم کن — قبل از هر چیزی
 app.use(cors({
-  origin: [
-    'http://localhost:5173', // برای توسعه
-    'https://medical-shop-la5we7ceh-amirs-projects-43cfa8db.vercel.app/' // ✅ آدرس Vercel — بدون https:// تکراری و بدون فاصله
-  ],
+  origin: true, // ⚠️ همه آدرس‌ها رو قبول می‌کنه — فقط برای تست
   credentials: true
 }));
 
