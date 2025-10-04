@@ -1,7 +1,6 @@
 // src/services/api.js
-const API_BASE_URL = 'https://medical-shop-backend-v1u1.onrender.com'; // به خاطر proxy در vite.config.js
+const API_BASE_URL = 'https://medical-shop-backend-v1u1.onrender.com'; // ⚠️ جای این آدرس، آدرس واقعی بک‌اند Render رو بذار
 
-// تابع کمکی برای ارسال درخواست با توکن (اگر وجود داشت)
 const api = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');
   const headers = {
@@ -13,17 +12,33 @@ const api = async (endpoint, options = {}) => {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'خطا در ارتباط با سرور');
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
+      
+      // نمایش جزئیات خطا در کنسول
+      console.error('API Error:', {
+        url: `${API_BASE_URL}${endpoint}`,
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+
+      throw new Error(errorMessage);
+    }
+
+    return response.json();
+  } catch (err) {
+    // نمایش خطا در کنسول
+    console.error('Fetch Error:', err);
+    throw err;
   }
-
-  return response.json();
 };
 
 export default api;
