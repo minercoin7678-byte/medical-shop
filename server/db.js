@@ -2,6 +2,18 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
+// چک کردن متغیرهای محیطی
+if (!process.env.DB_HOST || !process.env.DB_PORT || !process.env.DB_NAME || !process.env.DB_USER || !process.env.DB_PASSWORD) {
+  console.error('❌ متغیرهای محیطی دیتابیس تعریف نشدن!');
+  console.error('لطفاً این متغیرها رو در .env یا Render تعریف کن:');
+  console.error('- DB_HOST');
+  console.error('- DB_PORT');
+  console.error('- DB_NAME');
+  console.error('- DB_USER');
+  console.error('- DB_PASSWORD');
+  process.exit(1);
+}
+
 // تنظیمات اتصال با SSL
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -15,14 +27,11 @@ const pool = new Pool({
 });
 
 // تست اتصال
-// تست اتصال + نمایش اطلاعات دیتابیس
-pool.query('SELECT current_database(), current_user;', (err, res) => {
+pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('❌ دیتابیس وصل نشد:', err.stack);
   } else {
-    const dbName = res.rows[0].current_database;
-    const dbUser = res.rows[0].current_user;
-    console.log(`✅ دیتابیس "${dbName}" با کاربر "${dbUser}" وصل شد!`);
+    console.log('✅ دیتابیس با موفقیت وصل شد!');
   }
 });
 
