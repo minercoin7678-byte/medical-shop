@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken'); // ⚠️ این رو بالا اضافه کن
 const db = require('../db');
 const router = express.Router();
-const jwt = require('jsonwebtoken'); // ⚠️ این خط حتماً باید وجود داشته باشه
+
 
 // Middleware برای احراز هویت
 const authenticateToken = (req, res, next) => {
