@@ -157,10 +157,26 @@ function AdminLogin() {
   );
 }
 
-// کامپوننت داشبورد کاربر
+// کامپوننت داشبورد کاربر (به‌روزشده)
 function Dashboard() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const data = await api('/orders');
+        setOrders(data);
+      } catch (err) {
+        console.error('Error loading orders:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchOrders();
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -169,14 +185,45 @@ function Dashboard() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">داشبورد کاربر</h2>
-      <p>نام: {user.name}</p>
-      <p>ایمیل: {user.email}</p>
-      <p>نقش: {user.role}</p>
+      <p><strong>نام:</strong> {user.name}</p>
+      <p><strong>ایمیل:</strong> {user.email}</p>
+      <p><strong>نقش:</strong> {user.role}</p>
+
+      <div className="mt-6">
+        <h3 className="text-xl font-bold mb-2">لینک‌های سریع</h3>
+        <button
+          onClick={() => navigate('/cart')}
+          className="bg-green-600 text-white px-4 py-2 rounded mr-2"
+        >
+          سبد خرید
+        </button>
+      </div>
+
+      <div className="mt-6">
+        <h3 className="text-xl font-bold mb-2">سابقه سفارشات</h3>
+        {loading ? (
+          <p>در حال بارگذاری...</p>
+        ) : orders.length === 0 ? (
+          <p>شما هنوز سفارشی ثبت نکرده‌اید.</p>
+        ) : (
+          <div className="space-y-2">
+            {orders.map(order => (
+              <div key={order.id} className="border p-3 rounded">
+                <p>شماره سفارش: #{order.id}</p>
+                <p>تاریخ: {new Date(order.created_at).toLocaleDateString('fa-IR')}</p>
+                <p>مبلغ کل: {order.total_amount.toLocaleString()} تومان</p>
+                <p>وضعیت: <span className="font-bold">{order.status === 'pending' ? 'در انتظار' : order.status}</span></p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <button
         onClick={handleLogout}
-        className="mt-4 bg-red-600 text-white p-2 rounded"
+        className="mt-6 bg-red-600 text-white px-4 py-2 rounded"
       >
         خروج
       </button>
