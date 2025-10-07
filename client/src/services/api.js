@@ -1,5 +1,5 @@
-// src/services/api.js
-const API_BASE_URL ='https://medical-shop-backend-v1u1.onrender.com/api'; // ⚠️ جای این آدرس، آدرس واقعی بک‌اند Render رو بذار
+// client/src/services/api.js
+const API_BASE_URL ='https://medical-shop-backend-v1u1.onrender.com/api'; // ⚠️ بدون فاصله اضافی
 
 const api = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');

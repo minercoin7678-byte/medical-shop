@@ -37,7 +37,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10); // ⚠️ این خط فقط یک‌بار اجرا می‌شه — موقع ثبت‌نام
 
     const result = await db.query(
       `INSERT INTO users (name, email, password, phone, address)
@@ -56,6 +56,7 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /api/login
+// POST /api/login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -70,7 +71,7 @@ router.post('/login', async (req, res) => {
     }
 
     const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password); // ⚠️ این خط رمز عبور رو با هش مقایسه می‌کنه
     if (!isMatch) {
       return res.status(400).json({ error: 'Invalid password.' });
     }

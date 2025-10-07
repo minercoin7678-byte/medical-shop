@@ -1,10 +1,10 @@
 ﻿require('dotenv').config();
 const express = require('express');
+const app = express();
 const cors = require('cors');
 const db = require('./db');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ⚠️ اول CORS رو تنظیم کن — قبل از هر چیزی
@@ -18,6 +18,7 @@ app.use(helmet());
 
 // پارس کردن JSON
 app.use(express.json());
+app.set('trust proxy', 1);
 
 // محدودیت تعداد درخواست‌ها برای لاگین
 //const loginLimiter = rateLimit({
@@ -55,3 +56,25 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log('Server is running on port ' + PORT + '...');
 });
+const cors = require('cors');
+
+// لیست آدرس‌های مجاز (فرانت‌اند شما)
+const allowedOrigins = [
+  'http://localhost:5000',           // توسعه لوکال
+  'https://medical-shop-alpha.vercel.app/' // آدرس نهایی Vercel شما
+];
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // اجازه بده اگر origin در لیست مجاز باشه یا undefined باشه (مثل Postman یا curl)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // اگر نیاز به کوکی داری (معمولاً برای JWT لازم نیست، ولی امن‌تره)
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
