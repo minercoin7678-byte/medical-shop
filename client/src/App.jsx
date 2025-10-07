@@ -436,28 +436,16 @@ function AppContent() {
 
   return (
     <div className="p-6">
-      <nav className="mb-6 flex flex-wrap gap-4">
-        <Link to="/" className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">خانه</Link>
-        <Link to="/cart" className="bg-green-200 hover:bg-green-300 px-4 py-2 rounded">سبد خرید</Link>
+      <nav className="mb-6 flex flex-wrap items-center gap-3">
+        <Link to="/" className="mr-0">خانه</Link>
+        <Link to="/cart" className="mr-0">سبد خرید</Link>
         {user ? (
-          <>
-            <Link to="/dashboard" className="bg-blue-200 hover:bg-blue-300 px-4 py-2 rounded">داشبورد</Link>
-            <button
-              onClick={() => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('user');
-                window.location.href = '/#/';
-              }}
-              className="bg-red-200 hover:bg-red-300 px-4 py-2 rounded"
-            >
-              خروج
-            </button>
-          </>
+          <Link to="/dashboard" className="mr-0">داشبورد</Link>
         ) : (
           <>
-            <Link to="/login" className="bg-blue-200 hover:bg-blue-300 px-4 py-2 rounded">ورود کاربر</Link>
-            <Link to="/admin/login" className="bg-purple-200 hover:bg-purple-300 px-4 py-2 rounded">ورود ادمین</Link>
-            <Link to="/register" className="bg-green-200 hover:bg-green-300 px-4 py-2 rounded">ثبت‌نام</Link>
+            <Link to="/login" className="mr-0">ورود کاربر</Link>
+            <Link to="/admin/login" className="mr-0">ورود ادمین</Link>
+            <Link to="/register" className="mr-0">ثبت‌نام</Link>
           </>
         )}
       </nav>
