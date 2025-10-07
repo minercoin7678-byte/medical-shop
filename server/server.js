@@ -6,10 +6,10 @@ const db = require('./db');
 
 const app = express();
 
-// ✅ آدرس‌های مجاز — بدون فاصله اضافه!
+// ✅ فقط یک بار CORS رو تنظیم کن — بدون تکرار!
 const allowedOrigins = [
   'http://localhost:5000',
-  'https://medical-shop-alpha.vercel.app'
+  'https://medical-shop-alpha.vercel.app' // ← دقیقاً همین!
 ];
 
 const corsOptions = {
@@ -24,10 +24,9 @@ const corsOptions = {
   optionsSuccessStatus: 200
 };
 
-// ✅ فقط یک بار CORS رو اعمال کن
-app.use(cors(corsOptions));
+app.use(cors(corsOptions)); // ✅ فقط یک بار
 
-// امنیت و میدلورها
+// میدلورهای دیگه
 app.use(helmet());
 app.use(express.json());
 app.set('trust proxy', 1);
@@ -45,7 +44,7 @@ app.get('/', (req, res) => {
   res.send('Medical Shop Server is ready!');
 });
 
-// ✅ فقط یک بار سرور رو اجرا کن — و حتماً با '0.0.0.0'
+// ✅ فقط یک بار سرور رو اجرا کن — با 0.0.0.0
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
