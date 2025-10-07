@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Link, useNavigate } from 'react-router-dom'; // ⚠️ تصحیح نام تابع
-import api from './services/api'; // ⚠️ استفاده از فایل api.js
+import { HashRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import api from './services/api';
 import './App.css';
 
 // کامپوننت صفحه اصلی
@@ -8,10 +8,10 @@ function Home() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    fetch('/api/products')
-      .then(res => res.json())
+    // ✅ تغییر اصلی: از api.js استفاده کن، نه fetch مستقیم
+    api('/products')
       .then(data => setProducts(data))
-      .catch(err => console.error('Error:', err));
+      .catch(err => console.error('Error loading products:', err));
   }, []);
 
   return (
@@ -30,12 +30,12 @@ function Home() {
   );
 }
 
-// کامپوننت لاگین کاربر (به‌روزرسانی‌شده)
+// کامپوننت لاگین کاربر
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); // ⚠️ استفاده از useNavigate
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,11 +47,8 @@ function Login() {
         body: JSON.stringify({ email, password }),
       });
 
-      // ذخیره توکن و اطلاعات کاربر
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-
-      // هدایت به داشبورد کاربر
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -86,12 +83,12 @@ function Login() {
   );
 }
 
-// کامپوننت لاگین ادمین (به‌روزرسانی‌شده)
+// کامپوننت لاگین ادمین
 function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); // ⚠️ استفاده از useNavigate
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -107,11 +104,8 @@ function AdminLogin() {
         throw new Error('دسترسی ادمین مورد نیاز است.');
       }
 
-      // ذخیره توکن و اطلاعات
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-
-      // هدایت به داشبورد ادمین
       navigate('/admin/dashboard');
     } catch (err) {
       setError(err.message);
@@ -146,7 +140,7 @@ function AdminLogin() {
   );
 }
 
-// کامپوننت داشبورد کاربر (ساده)
+// کامپوننت داشبورد کاربر
 function Dashboard() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const navigate = useNavigate();
@@ -173,7 +167,7 @@ function Dashboard() {
   );
 }
 
-// کامپوننت داشبورد ادمین (ساده)
+// کامپوننت داشبورد ادمین
 function AdminDashboard() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const navigate = useNavigate();
@@ -199,6 +193,7 @@ function AdminDashboard() {
     </div>
   );
 }
+
 // کامپوننت ثبت‌نام
 function Register() {
   const [name, setName] = useState('');
@@ -219,10 +214,8 @@ function Register() {
         body: JSON.stringify({ name, email, password, phone, address }),
       });
 
-      // ذخیره توکن و کاربر
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-
       navigate('/dashboard');
     } catch (err) {
       setError(err.message || 'خطا در ثبت‌نام');
@@ -304,7 +297,7 @@ function AppContent() {
   );
 }
 
-// کامپوننت نهایی که HashRouter رو در خودش داره
+// کامپوننت نهایی
 function App() {
   return (
     <HashRouter>
