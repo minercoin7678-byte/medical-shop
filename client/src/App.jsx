@@ -6,6 +6,9 @@ import './App.css';
 // کامپوننت صفحه اصلی
 function Home() {
   const [products, setProducts] = useState([]);
+      // داخل کامپوننت Home
+const user = JSON.parse(localStorage.getItem('user')) || null;
+const navigate = useNavigate();
 
   useEffect(() => {
     api('/products')
@@ -23,11 +26,20 @@ function Home() {
     } catch (err) {
       alert('خطا: ' + err.message);
     }
+
   };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">فروشگاه تجهیزات پزشکی</h1>
+      {user && (
+  <button
+    onClick={() => navigate('/dashboard')}
+    className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
+  >
+    بازگشت به داشبورد
+  </button>
+)}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map(p => (
           <div key={p.id} className="border p-4 rounded">
@@ -420,14 +432,34 @@ function Cart() {
 
 // کامپوننت اصلی
 function AppContent() {
+  const user = JSON.parse(localStorage.getItem('user')) || null;
+
   return (
     <div className="p-6">
-      <nav className="mb-6">
-        <Link to="/" className="mr-4">خانه</Link>
-        <Link to="/cart" className="mr-4">سبد خرید</Link>
-        <Link to="/login">ورود کاربر</Link>
-        <Link to="/admin/login" className="ml-4">ورود ادمین</Link>
-        <Link to="/register" className="mr-4">ثبت‌نام</Link>
+      <nav className="mb-6 flex flex-wrap gap-4">
+        <Link to="/" className="bg-gray-200 hover:bg-gray-300 px-4 py-2 rounded">خانه</Link>
+        <Link to="/cart" className="bg-green-200 hover:bg-green-300 px-4 py-2 rounded">سبد خرید</Link>
+        {user ? (
+          <>
+            <Link to="/dashboard" className="bg-blue-200 hover:bg-blue-300 px-4 py-2 rounded">داشبورد</Link>
+            <button
+              onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.href = '/#/';
+              }}
+              className="bg-red-200 hover:bg-red-300 px-4 py-2 rounded"
+            >
+              خروج
+            </button>
+          </>
+        ) : (
+          <>
+            <Link to="/login" className="bg-blue-200 hover:bg-blue-300 px-4 py-2 rounded">ورود کاربر</Link>
+            <Link to="/admin/login" className="bg-purple-200 hover:bg-purple-300 px-4 py-2 rounded">ورود ادمین</Link>
+            <Link to="/register" className="bg-green-200 hover:bg-green-300 px-4 py-2 rounded">ثبت‌نام</Link>
+          </>
+        )}
       </nav>
 
       <Routes>
