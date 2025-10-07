@@ -436,16 +436,24 @@ function AppContent() {
 
   return (
     <div className="p-6">
-      <nav className="mb-6 flex flex-wrap items-center gap-3">
-        <Link to="/" className="mr-0">خانه</Link>
-        <Link to="/cart" className="mr-0">سبد خرید</Link>
-        {user ? (
-          <Link to="/dashboard" className="mr-0">داشبورد</Link>
-        ) : (
+      <nav className="mb-6">
+        <Link to="/" className="mr-2">خانه</Link>
+        {' - '}
+        <Link to="/cart" className="mr-2">سبد خرید</Link>
+        {!user && (
           <>
-            <Link to="/login" className="mr-0">ورود کاربر</Link>
-            <Link to="/admin/login" className="mr-0">ورود ادمین</Link>
-            <Link to="/register" className="mr-0">ثبت‌نام</Link>
+            {' - '}
+            <Link to="/login" className="mr-2">ورود کاربر</Link>
+            {' - '}
+            <Link to="/admin/login" className="mr-2">ورود ادمین</Link>
+            {' - '}
+            <Link to="/register" className="mr-2">ثبت‌نام</Link>
+          </>
+        )}
+        {user && (
+          <>
+            {' - '}
+            <Link to="/dashboard">داشبورد</Link>
           </>
         )}
       </nav>
