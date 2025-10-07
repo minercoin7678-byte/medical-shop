@@ -8,11 +8,22 @@ function Home() {
   const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    // ✅ تغییر اصلی: از api.js استفاده کن، نه fetch مستقیم
     api('/products')
       .then(data => setProducts(data))
       .catch(err => console.error('Error loading products:', err));
   }, []);
+
+  const addToCart = async (productId) => {
+    try {
+      await api('/cart', {
+        method: 'POST',
+        body: JSON.stringify({ product_id: productId, quantity: 1 })
+      });
+      alert('محصول به سبد خرید اضافه شد!');
+    } catch (err) {
+      alert('خطا: ' + err.message);
+    }
+  };
 
   return (
     <div className="p-6">
@@ -23,6 +34,12 @@ function Home() {
             <h2 className="font-bold">{p.name}</h2>
             <p>{p.description}</p>
             <p className="text-green-600 font-bold">قیمت: {p.price} تومان</p>
+            <button
+              onClick={() => addToCart(p.id)}
+              className="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm"
+            >
+              افزودن به سبد
+            </button>
           </div>
         ))}
       </div>
@@ -274,12 +291,93 @@ function Register() {
   );
 }
 
+// کامپوننت سبد خرید
+function Cart() {
+  const [cartItems, setCartItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const data = await api('/cart');
+        setCartItems(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCart();
+  }, []);
+
+  const removeFromCart = async (id) => {
+    try {
+      await api(`/cart/${id}`, { method: 'DELETE' });
+      setCartItems(cartItems.filter(item => item.id !== id));
+    } catch (err) {
+      alert('خطا در حذف از سبد: ' + err.message);
+    }
+  };
+
+  const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+  if (loading) return <div className="p-6">در حال بارگذاری...</div>;
+  if (error) return <div className="p-6 text-red-600">خطا: {error}</div>;
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">سبد خرید شما</h2>
+      
+      {cartItems.length === 0 ? (
+        <p className="text-gray-600">سبد خرید شما خالی است.</p>
+      ) : (
+        <>
+          <div className="space-y-4">
+            {cartItems.map(item => (
+              <div key={item.id} className="flex items-center justify-between border p-4 rounded">
+                <div>
+                  <h3 className="font-bold">{item.name}</h3>
+                  <p>تعداد: {item.quantity}</p>
+                  <p className="text-green-600">قیمت واحد: {item.price} تومان</p>
+                </div>
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  className="bg-red-500 text-white px-3 py-1 rounded"
+                >
+                  حذف
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 p-4 bg-gray-100 rounded">
+            <h3 className="text-xl font-bold">جمع کل: {total.toLocaleString()} تومان</h3>
+            <button className="mt-2 bg-blue-600 text-white px-4 py-2 rounded">
+              ادامه فرآیند خرید
+            </button>
+          </div>
+        </>
+      )}
+
+      <button
+        onClick={() => navigate(-1)}
+        className="mt-4 text-blue-600"
+      >
+        بازگشت
+      </button>
+    </div>
+  );
+}
+
 // کامپوننت اصلی
 function AppContent() {
   return (
     <div className="p-6">
       <nav className="mb-6">
         <Link to="/" className="mr-4">خانه</Link>
+        <Link to="/cart" className="mr-4">سبد خرید</Link>
         <Link to="/login">ورود کاربر</Link>
         <Link to="/admin/login" className="ml-4">ورود ادمین</Link>
         <Link to="/register" className="mr-4">ثبت‌نام</Link>
@@ -287,6 +385,7 @@ function AppContent() {
 
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/dashboard" element={<Dashboard />} />

@@ -1,5 +1,5 @@
-// client/src/services/api.js
-const API_BASE_URL ='https://medical-shop-backend-v1u1.onrender.com/api'; // ⚠️ بدون فاصله اضافی
+// src/services/api.js
+const API_BASE_URL = 'https://medical-shop-backend-v1u1.onrender.com/api';
 
 const api = async (endpoint, options = {}) => {
   const token = localStorage.getItem('token');
@@ -22,7 +22,6 @@ const api = async (endpoint, options = {}) => {
       const errorData = await response.json().catch(() => ({}));
       const errorMessage = errorData.error || `HTTP error! status: ${response.status}`;
       
-      // نمایش جزئیات خطا در کنسول
       console.error('API Error:', {
         url: `${API_BASE_URL}${endpoint}`,
         status: response.status,
@@ -35,7 +34,6 @@ const api = async (endpoint, options = {}) => {
 
     return response.json();
   } catch (err) {
-    // نمایش خطا در کنسول
     console.error('Fetch Error:', err);
     throw err;
   }
