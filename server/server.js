@@ -8,13 +8,15 @@ const app = express();
 
 // ✅ فقط یک بار CORS رو تنظیم کن — بدون تکرار!
 const allowedOrigins = [
-  'http://localhost:5000',
-  'https://medical-shop-alpha.vercel.app' // ← دقیقاً همین!
+  'http://localhost:5000'
 ];
 
 const corsOptions = {
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // اجازه بده همه زیردامنه‌های vercel.app
+    if (!origin || 
+        origin === 'http://localhost:5000' || 
+        origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
