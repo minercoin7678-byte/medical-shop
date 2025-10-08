@@ -30,13 +30,19 @@ function Home() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">فروشگاه تجهیزات پزشکی</h1>
       {user && (
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          بازگشت به داشبورد
-        </button>
-      )}
+  <button
+    onClick={() => {
+      if (user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    }}
+    className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
+  >
+    بازگشت به داشبورد
+  </button>
+)}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map(p => (
           <div key={p.id} className="border p-4 rounded">
@@ -334,17 +340,17 @@ function AddProduct() {
           className="w-full p-2 border rounded"
         />
         <div className="flex gap-2">
-          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
-            افزودن محصول
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate('/admin/dashboard')}
-            className="bg-gray-500 text-white px-4 py-2 rounded"
-          >
-            بازگشت
-          </button>
-        </div>
+  <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+    افزودن محصول
+  </button>
+  <button
+    type="button"
+    onClick={() => navigate('/admin/dashboard')}
+    className="bg-gray-500 text-white px-4 py-2 rounded"
+  >
+    بازگشت به داشبورد ادمین
+  </button>
+</div>
       </form>
     </div>
   );
