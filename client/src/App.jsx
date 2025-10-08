@@ -404,7 +404,81 @@ function AdminDashboard() {
     </div>
   );
 }
+// کامپوننت ثبت‌نام
+function Register() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [address, setAddress] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+    api('/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email, password, phone, address }),
+    })
+      .then(data => {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/dashboard');
+      })
+      .catch(err => setError(err.message || 'خطا در ثبت‌نام'));
+  };
+
+  return (
+    <div className="p-6 max-w-md mx-auto">
+      <h2 className="text-2xl font-bold mb-4">ثبت‌نام</h2>
+      {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="نام کامل"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="ایمیل"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="رمز عبور"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="شماره تلفن"
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="text"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="آدرس"
+          className="w-full p-2 border rounded"
+        />
+        <button type="submit" className="w-full bg-green-600 text-white p-2 rounded">
+          ثبت‌نام
+        </button>
+      </form>
+    </div>
+  );
+}
 function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
