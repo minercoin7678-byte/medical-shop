@@ -225,7 +225,130 @@ function Dashboard() {
     </div>
   );
 }
+// کامپوننت افزودن محصول
+function AddProduct() {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [stock, setStock] = useState('999');
+  const [category, setCategory] = useState('');
+  const [image_url, setImageUrl] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    // اعتبارسنجی
+    if (!name || !price || !category) {
+      setError('نام، قیمت و دسته‌بندی اجباری هستند.');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/admin/login');
+      return;
+    }
+
+    fetch('https://medical-shop-backend-v1u1.onrender.com/api/admin/products', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, description, price: parseFloat(price), stock: parseInt(stock), category, image_url })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('خطا در افزودن محصول');
+        return res.json();
+      })
+      .then(() => {
+        setSuccess('محصول با موفقیت اضافه شد!');
+        // ریست فرم
+        setName('');
+        setDescription('');
+        setPrice('');
+        setStock('999');
+        setCategory('');
+        setImageUrl('');
+      })
+      .catch(err => setError(err.message));
+  };
+
+  return (
+    <div className="p-6 max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">افزودن محصول جدید</h2>
+      
+      {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
+      {success && <div className="bg-green-100 text-green-700 p-2 mb-4 rounded">{success}</div>}
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="نام محصول *"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="توضیحات"
+          className="w-full p-2 border rounded"
+          rows="3"
+        />
+        <input
+          type="number"
+          value={price}
+          onChange={(e) => setPrice(e.target.value)}
+          placeholder="قیمت (تومان) *"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="number"
+          value={stock}
+          onChange={(e) => setStock(e.target.value)}
+          placeholder="موجودی *"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="text"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          placeholder="دسته‌بندی *"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="url"
+          value={image_url}
+          onChange={(e) => setImageUrl(e.target.value)}
+          placeholder="لینک تصویر (اختیاری)"
+          className="w-full p-2 border rounded"
+        />
+        <div className="flex gap-2">
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+            افزودن محصول
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/dashboard')}
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+          >
+            بازگشت
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
 // کامپوننت داشبورد ادمین (کامل‌شده)
 // کامپوننت داشبورد ادمین (نسخه ایمن و کامل)
 function AdminDashboard() {
@@ -397,7 +520,11 @@ function AdminDashboard() {
           </div>
         )}
       </div>
-
+        <div className="mb-4">
+  <Link to="/admin/add-product" className="bg-blue-600 text-white px-4 py-2 rounded">
+    افزودن محصول جدید
+  </Link>
+</div>
       <button
         onClick={handleLogout}
         className="mt-4 bg-red-600 text-white p-2 rounded"
@@ -617,6 +744,7 @@ function AppContent() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/admin/add-product" element={<AddProduct />} />
       </Routes>
     </div>
   );
