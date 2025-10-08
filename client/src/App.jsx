@@ -227,7 +227,7 @@ function Dashboard() {
 }
 
 // کامپوننت داشبورد ادمین (کامل‌شده)
-// کامپوننت داشبورد ادمین (اصلاح‌شده)
+// کامپوننت داشبورد ادمین (نسخه ایمن و کامل)
 function AdminDashboard() {
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -236,30 +236,40 @@ function AdminDashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // ✅ اول چک کن که توکن وجود داره
     const token = localStorage.getItem('token');
     if (!token) {
-      console.error('No token found, redirecting to login...');
       navigate('/admin/login');
       return;
     }
 
-    // دریافت محصولات
-    api('/admin/products')
-      .then(data => {
-        setProducts(data);
-      })
+    const fetchWithAuth = (endpoint) => {
+      return fetch(`https://medical-shop-backend-v1u1.onrender.com/api${endpoint}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }).then(res => {
+        if (!res.ok) {
+          if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/admin/login');
+          }
+          throw new Error('خطا در دریافت داده');
+        }
+        return res.json();
+      });
+    };
+
+    fetchWithAuth('/admin/products')
+      .then(data => setProducts(data))
       .catch(err => console.error('Error loading products:', err));
 
-    // دریافت سفارشات
-    api('/admin/orders')
-      .then(data => {
-        setOrders(data);
-      })
+    fetchWithAuth('/admin/orders')
+      .then(data => setOrders(data))
       .catch(err => console.error('Error loading orders:', err));
 
-    // دریافت کاربران
-    api('/admin/users')
+    fetchWithAuth('/admin/users')
       .then(data => {
         setUsers(data);
         setLoading(false);
@@ -267,10 +277,6 @@ function AdminDashboard() {
       .catch(err => {
         console.error('Error loading users:', err);
         setLoading(false);
-        // اگر خطای 401 بود، به لاگین برگرد
-        if (err.message && err.message.includes('Access token')) {
-          navigate('/admin/login');
-        }
       });
   }, [navigate]);
 
@@ -284,7 +290,6 @@ function AdminDashboard() {
     <div className="p-6 max-w-6xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">داشبورد ادمین</h2>
       
-      {/* لیست محصولات */}
       <div className="mb-6">
         <h3 className="text-xl font-bold mb-2">لیست محصولات</h3>
         {products.length === 0 ? (
@@ -315,7 +320,6 @@ function AdminDashboard() {
         )}
       </div>
 
-      {/* لیست سفارشات */}
       <div className="mb-6">
         <h3 className="text-xl font-bold mb-2">لیست سفارشات</h3>
         {loading ? (
@@ -356,7 +360,6 @@ function AdminDashboard() {
         )}
       </div>
 
-      {/* لیست کاربران */}
       <div className="mb-6">
         <h3 className="text-xl font-bold mb-2">لیست کاربران</h3>
         {loading ? (
