@@ -3,12 +3,10 @@ import { HashRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import api from './services/api';
 import './App.css';
 
-// کامپوننت صفحه اصلی
 function Home() {
   const [products, setProducts] = useState([]);
-      // داخل کامپوننت Home
-const user = JSON.parse(localStorage.getItem('user')) || null;
-const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user')) || null;
+  const navigate = useNavigate();
 
   useEffect(() => {
     api('/products')
@@ -26,20 +24,19 @@ const navigate = useNavigate();
     } catch (err) {
       alert('خطا: ' + err.message);
     }
-
   };
 
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">فروشگاه تجهیزات پزشکی</h1>
       {user && (
-  <button
-    onClick={() => navigate('/dashboard')}
-    className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
-  >
-    بازگشت به داشبورد
-  </button>
-)}
+        <button
+          onClick={() => navigate('/dashboard')}
+          className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
+        >
+          بازگشت به داشبورد
+        </button>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map(p => (
           <div key={p.id} className="border p-4 rounded">
@@ -59,36 +56,31 @@ const navigate = useNavigate();
   );
 }
 
-// کامپوننت لاگین کاربر
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-
-    try {
-      const data = await api('/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.message);
-    }
+    api('/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+      .then(data => {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/dashboard');
+      })
+      .catch(err => setError(err.message));
   };
 
   return (
     <div className="p-6 max-w-md mx-auto">
       <h2 className="text-2xl font-bold mb-4">ورود کاربر</h2>
       {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
-      
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -112,40 +104,34 @@ function Login() {
   );
 }
 
-// کامپوننت لاگین ادمین
 function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-
-    try {
-      const data = await api('/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (data.user.role !== 'admin') {
-        throw new Error('دسترسی ادمین مورد نیاز است.');
-      }
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/admin/dashboard');
-    } catch (err) {
-      setError(err.message);
-    }
+    api('/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    })
+      .then(data => {
+        if (data.user.role !== 'admin') {
+          throw new Error('دسترسی ادمین مورد نیاز است.');
+        }
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/admin/dashboard');
+      })
+      .catch(err => setError(err.message));
   };
 
   return (
     <div className="p-6 max-w-md mx-auto">
       <h2 className="text-2xl font-bold mb-4">ورود ادمین</h2>
       {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
-      
       <form onSubmit={handleSubmit}>
         <input
           type="email"
@@ -169,7 +155,6 @@ function AdminLogin() {
   );
 }
 
-// کامپوننت داشبورد کاربر (به‌روزشده)
 function Dashboard() {
   const user = JSON.parse(localStorage.getItem('user')) || {};
   const [orders, setOrders] = useState([]);
@@ -177,17 +162,15 @@ function Dashboard() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const data = await api('/orders');
+    api('/orders')
+      .then(data => {
         setOrders(data);
-      } catch (err) {
-        console.error('Error loading orders:', err);
-      } finally {
         setLoading(false);
-      }
-    };
-    fetchOrders();
+      })
+      .catch(err => {
+        console.error('Error loading orders:', err);
+        setLoading(false);
+      });
   }, []);
 
   const handleLogout = () => {
@@ -243,10 +226,40 @@ function Dashboard() {
   );
 }
 
-// کامپوننت داشبورد ادمین
+// کامپوننت داشبورد ادمین (کامل‌شده)
 function AdminDashboard() {
-  const user = JSON.parse(localStorage.getItem('user')) || {};
+  const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // دریافت محصولات
+    api('/admin/products')
+      .then(data => {
+        setProducts(data);
+      })
+      .catch(err => console.error('Error loading products:', err));
+
+    // دریافت سفارشات
+    api('/admin/orders')
+      .then(data => {
+        setOrders(data);
+      })
+      .catch(err => console.error('Error loading orders:', err));
+
+    // دریافت کاربران
+    api('/admin/users')
+      .then(data => {
+        setUsers(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading users:', err);
+        setLoading(false);
+      });
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -255,11 +268,120 @@ function AdminDashboard() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 max-w-6xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">داشبورد ادمین</h2>
-      <p>نام: {user.name}</p>
-      <p>ایمیل: {user.email}</p>
-      <p>نقش: {user.role}</p>
+      
+      {/* لیست محصولات */}
+      <div className="mb-6">
+        <h3 className="text-xl font-bold mb-2">لیست محصولات</h3>
+        {products.length === 0 ? (
+          <p>محصولی وجود ندارد.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border">
+              <thead>
+                <tr>
+                  <th className="border p-2">نام</th>
+                  <th className="border p-2">قیمت</th>
+                  <th className="border p-2">موجودی</th>
+                  <th className="border p-2">دسته‌بندی</th>
+                </tr>
+              </thead>
+              <tbody>
+                {products.map(product => (
+                  <tr key={product.id}>
+                    <td className="border p-2">{product.name}</td>
+                    <td className="border p-2">{product.price.toLocaleString()} تومان</td>
+                    <td className="border p-2">{product.stock || 'نامشخص'}</td>
+                    <td className="border p-2">{product.category || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* لیست سفارشات */}
+      <div className="mb-6">
+        <h3 className="text-xl font-bold mb-2">لیست سفارشات</h3>
+        {loading ? (
+          <p>در حال بارگذاری...</p>
+        ) : orders.length === 0 ? (
+          <p>سفارشی وجود ندارد.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border">
+              <thead>
+                <tr>
+                  <th className="border p-2">شماره سفارش</th>
+                  <th className="border p-2">کاربر</th>
+                  <th className="border p-2">مبلغ</th>
+                  <th className="border p-2">وضعیت</th>
+                  <th className="border p-2">تاریخ</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map(order => (
+                  <tr key={order.id}>
+                    <td className="border p-2">#{order.id}</td>
+                    <td className="border p-2">{order.user_name} ({order.email})</td>
+                    <td className="border p-2">{order.total_amount.toLocaleString()} تومان</td>
+                    <td className="border p-2">
+                      <span className="font-bold">
+                        {order.status === 'pending' ? 'در انتظار' : order.status}
+                      </span>
+                    </td>
+                    <td className="border p-2">
+                      {new Date(order.created_at).toLocaleDateString('fa-IR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* لیست کاربران */}
+      <div className="mb-6">
+        <h3 className="text-xl font-bold mb-2">لیست کاربران</h3>
+        {loading ? (
+          <p>در حال بارگذاری...</p>
+        ) : users.length === 0 ? (
+          <p>کاربری وجود ندارد.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full border">
+              <thead>
+                <tr>
+                  <th className="border p-2">نام</th>
+                  <th className="border p-2">ایمیل</th>
+                  <th className="border p-2">نقش</th>
+                  <th className="border p-2">تاریخ عضویت</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(user => (
+                  <tr key={user.id}>
+                    <td className="border p-2">{user.name}</td>
+                    <td className="border p-2">{user.email}</td>
+                    <td className="border p-2">
+                      <span className={user.role === 'admin' ? 'text-red-600 font-bold' : ''}>
+                        {user.role}
+                      </span>
+                    </td>
+                    <td className="border p-2">
+                      {new Date(user.created_at).toLocaleDateString('fa-IR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
       <button
         onClick={handleLogout}
         className="mt-4 bg-red-600 text-white p-2 rounded"
@@ -270,87 +392,6 @@ function AdminDashboard() {
   );
 }
 
-// کامپوننت ثبت‌نام
-function Register() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    try {
-      const data = await api('/register', {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password, phone, address }),
-      });
-
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.message || 'خطا در ثبت‌نام');
-    }
-  };
-
-  return (
-    <div className="p-6 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">ثبت‌نام</h2>
-      {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
-      
-      <form onSubmit={handleSubmit} className="space-y-3">
-        <input
-          type="text"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="نام کامل"
-          className="w-full p-2 border rounded"
-          required
-        />
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="ایمیل"
-          className="w-full p-2 border rounded"
-          required
-        />
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="رمز عبور"
-          className="w-full p-2 border rounded"
-          required
-        />
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="شماره تلفن"
-          className="w-full p-2 border rounded"
-        />
-        <input
-          type="text"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="آدرس"
-          className="w-full p-2 border rounded"
-        />
-        <button type="submit" className="w-full bg-green-600 text-white p-2 rounded">
-          ثبت‌نام
-        </button>
-      </form>
-    </div>
-  );
-}
-
-// کامپوننت سبد خرید
 function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -358,27 +399,23 @@ function Cart() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCart = async () => {
-      try {
-        const data = await api('/cart');
+    api('/cart')
+      .then(data => {
         setCartItems(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
         setLoading(false);
-      }
-    };
-
-    fetchCart();
+      })
+      .catch(err => {
+        setError(err.message);
+        setLoading(false);
+      });
   }, []);
 
-  const removeFromCart = async (id) => {
-    try {
-      await api(`/cart/${id}`, { method: 'DELETE' });
-      setCartItems(cartItems.filter(item => item.id !== id));
-    } catch (err) {
-      alert('خطا در حذف از سبد: ' + err.message);
-    }
+  const removeFromCart = (id) => {
+    api(`/cart/${id}`, { method: 'DELETE' })
+      .then(() => {
+        setCartItems(cartItems.filter(item => item.id !== id));
+      })
+      .catch(err => alert('خطا در حذف از سبد: ' + err.message));
   };
 
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -389,7 +426,6 @@ function Cart() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">سبد خرید شما</h2>
-      
       {cartItems.length === 0 ? (
         <p className="text-gray-600">سبد خرید شما خالی است.</p>
       ) : (
@@ -419,7 +455,6 @@ function Cart() {
           </div>
         </>
       )}
-
       <button
         onClick={() => navigate(-1)}
         className="mt-4 text-blue-600"
@@ -430,9 +465,35 @@ function Cart() {
   );
 }
 
-// کامپوننت اصلی
 function AppContent() {
-  const user = JSON.parse(localStorage.getItem('user')) || null;
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch {
+        setUser(null);
+      }
+    }
+
+    const handleStorageChange = () => {
+      const updatedUser = localStorage.getItem('user');
+      if (updatedUser) {
+        try {
+          setUser(JSON.parse(updatedUser));
+        } catch {
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   return (
     <div className="p-6">
@@ -471,7 +532,6 @@ function AppContent() {
   );
 }
 
-// کامپوننت نهایی
 function App() {
   return (
     <HashRouter>
