@@ -1,9 +1,31 @@
+// server/routes/adminRoutes.js
 const express = require('express');
 const db = require('../db');
-const adminAuth = require('../middleware/adminAuth');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
-// GET /api/admin/products → لیست همه محصولات (برای ادمین)
+// Middleware داخلی برای احراز هویت ادمین (بدون نیاز به فایل جداگانه)
+const adminAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    return res.status(401).json({ error: 'Access token required.' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).json({ error: 'Invalid or expired token.' });
+    }
+    if (user.role !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required.' });
+    }
+    req.user = user;
+    next();
+  });
+};
+
+// GET /api/admin/products
 router.get('/products', adminAuth, async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM products ORDER BY id ASC');
@@ -14,12 +36,12 @@ router.get('/products', adminAuth, async (req, res) => {
   }
 });
 
-// POST /api/admin/products → افزودن محصول جدید
+// POST /api/admin/products
 router.post('/products', adminAuth, async (req, res) => {
-  const { name, description, price, stock, category, image_url } = req.body;
+  const { name, description, price, stock = 999, category, image_url } = req.body;
 
-  if (!name || !price || !stock || !category) {
-    return res.status(400).json({ error: 'Name, price, stock, and category are required.' });
+  if (!name || !price || !category) {
+    return res.status(400).json({ error: 'Name, price, and category are required.' });
   }
 
   try {
@@ -39,7 +61,7 @@ router.post('/products', adminAuth, async (req, res) => {
   }
 });
 
-// PUT /api/admin/products/:id → ویرایش محصول
+// PUT /api/admin/products/:id
 router.put('/products/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
   const { name, description, price, stock, category, image_url } = req.body;
@@ -67,7 +89,7 @@ router.put('/products/:id', adminAuth, async (req, res) => {
   }
 });
 
-// DELETE /api/admin/products/:id → حذف محصول
+// DELETE /api/admin/products/:id
 router.delete('/products/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
 
@@ -85,30 +107,31 @@ router.delete('/products/:id', adminAuth, async (req, res) => {
   }
 });
 
-// GET /api/admin/orders → لیست همه سفارشات
+// GET /api/admin/orders
 router.get('/orders', adminAuth, async (req, res) => {
   try {
+    // تغییر total_price به total_amount برای هماهنگی با orderRoutes.js
     const result = await db.query(
-      `SELECT o.id, o.total_price, o.status, o.created_at, u.name AS user_name, u.email
+      `SELECT o.id, o.total_amount, o.status, o.created_at, u.name AS user_name, u.email
        FROM orders o
        JOIN users u ON o.user_id = u.id
        ORDER BY o.created_at DESC`
     );
 
-    res.json({ orders: result.rows });
+    res.json(result.rows); // بدون wrapper { orders: ... } برای هماهنگی با فرانت‌اند
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch orders.' });
   }
 });
 
-// GET /api/admin/users → لیست همه کاربران
+// GET /api/admin/users
 router.get('/users', adminAuth, async (req, res) => {
   try {
     const result = await db.query(
       'SELECT id, name, email, role, created_at FROM users ORDER BY id ASC'
     );
-    res.json({ users: result.rows });
+    res.json(result.rows); // بدون wrapper { users: ... }
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch users.' });
