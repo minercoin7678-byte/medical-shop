@@ -528,41 +528,45 @@ function CategoryManager() {
 
   // نمایش درختی
   // نمایش درختی با ساختار بصری واضح
+// نمایش درختی با رنگ‌بندی سلسله‌مراتبی
 const renderCategoryTree = (cats, level = 0) => {
-  return cats.map(cat => (
-    <div key={cat.id} className="mb-1">
-      <div 
-        className="flex items-center border rounded p-2 bg-gray-50"
-        style={{ 
-          marginRight: `${level * 20}px`,
-          marginLeft: `${level * 20}px`,
-          borderLeft: level > 0 ? '3px solid #3b82f6' : 'none'
-        }}
-      >
-        <span className="font-medium">{cat.name}</span>
-        <span className="text-sm text-gray-500 mr-2">({cat.slug})</span>
-        <div className="ml-auto flex gap-1">
-          <button 
-            className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded"
-            onClick={() => alert('ویرایش هنوز فعال نیست')}
-          >
-            ویرایش
-          </button>
-          <button 
-            className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded"
-            onClick={() => alert('حذف هنوز فعال نیست')}
-          >
-            حذف
-          </button>
+  return cats.map(cat => {
+    // تعیین رنگ بر اساس سطح
+    let bgColor = 'bg-red-100 border-red-300'; // سطح 0: قرمز
+    if (level === 1) {
+      bgColor = 'bg-blue-100 border-blue-300'; // سطح 1: آبی
+    } else if (level >= 2) {
+      bgColor = 'bg-yellow-100 border-yellow-300'; // سطح 2+: زرد
+    }
+
+    return (
+      <div key={cat.id} className="mb-2">
+        <div className={`flex items-center rounded p-2 border ${bgColor}`}>
+          <span className="font-medium">{cat.name}</span>
+          <span className="text-sm text-gray-600 mr-2">({cat.slug})</span>
+          <div className="ml-auto flex gap-1">
+            <button 
+              className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded"
+              onClick={() => alert('ویرایش هنوز فعال نیست')}
+            >
+              ویرایش
+            </button>
+            <button 
+              className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded"
+              onClick={() => alert('حذف هنوز فعال نیست')}
+            >
+              حذف
+            </button>
+          </div>
         </div>
+        {cat.children && cat.children.length > 0 && (
+          <div className="pl-4">
+            {renderCategoryTree(cat.children, level + 1)}
+          </div>
+        )}
       </div>
-      {cat.children && cat.children.length > 0 && (
-        <div className="mt-1">
-          {renderCategoryTree(cat.children, level + 1)}
-        </div>
-      )}
-    </div>
-  ));
+    );
+  });
 };
 
   return (
