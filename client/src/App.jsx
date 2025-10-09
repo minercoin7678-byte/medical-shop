@@ -355,6 +355,149 @@ function AddProduct() {
     </div>
   );
 }
+// کامپوننت افزودن دسته‌بندی جدید
+// کامپوننت افزودن دسته‌بندی جدید
+function AddCategory() {
+  const [name, setName] = useState('');
+  const [slug, setSlug] = useState('');
+  const [parentId, setParentId] = useState('');
+  const [description, setDescription] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true); // ✅ حالا استفاده می‌شه
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // ✅ تابع flattenCategories رو داخل useEffect تعریف می‌کنیم
+    const flattenCategories = (cats, level = 0) => {
+      let result = [];
+      cats.forEach(cat => {
+        result.push({
+          id: cat.id,
+          name: `${'—'.repeat(level)} ${cat.name}`
+        });
+        if (cat.children && cat.children.length > 0) {
+          result = result.concat(flattenCategories(cat.children, level + 1));
+        }
+      });
+      return result;
+    };
+
+    const token = localStorage.getItem('token');
+    fetch('https://medical-shop-backend-v1u1.onrender.com/api/admin/categories', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setCategories(flattenCategories(data));
+        setLoading(false); // ✅ حالا مقدارش خونده می‌شه
+      })
+      .catch(() => {
+        setError('خطا در بارگذاری لیست دسته‌بندی‌ها');
+        setLoading(false);
+      });
+  }, []); // ✅ بدون نیاز به flattenCategories در وابستگی‌ها
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    if (!name || !slug) {
+      setError('نام و نامک (slug) اجباری هستند.');
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    const payload = {
+      name,
+      slug,
+      description
+    };
+    if (parentId) payload.parent_id = parseInt(parentId);
+
+    fetch('https://medical-shop-backend-v1u1.onrender.com/api/admin/categories', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('خطا در افزودن دسته‌بندی');
+        return res.json();
+      })
+      .then(() => {
+        setSuccess('دسته‌بندی با موفقیت اضافه شد!');
+        setTimeout(() => navigate('/admin/categories'), 1500);
+      })
+      .catch(err => setError(err.message));
+  };
+
+  return (
+    <div className="p-6 max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">افزودن دسته‌بندی جدید</h2>
+      
+      {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
+      {success && <div className="bg-green-100 text-green-700 p-2 mb-4 rounded">{success}</div>}
+      
+      {/* ✅ نمایش وضعیت بارگذاری */}
+      {loading ? (
+        <p className="text-center">در حال بارگذاری دسته‌بندی‌ها...</p>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="نام دسته‌بندی *"
+            className="w-full p-2 border rounded"
+            required
+          />
+          <input
+            type="text"
+            value={slug}
+            onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/ /g, '-'))}
+            placeholder="نامک (slug) * — مثال: lab-devices"
+            className="w-full p-2 border rounded"
+            required
+          />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="توضیحات (اختیاری)"
+            className="w-full p-2 border rounded"
+            rows="3"
+          />
+          <select
+            value={parentId}
+            onChange={(e) => setParentId(e.target.value)}
+            className="w-full p-2 border rounded"
+          >
+            <option value="">دسته اصلی (بدون والد)</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.id}>{cat.name}</option>
+            ))}
+          </select>
+          <div className="flex gap-2">
+            <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+              افزودن دسته‌بندی
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/admin/categories')}
+              className="bg-gray-500 text-white px-4 py-2 rounded"
+            >
+              لغو
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
 // کامپوننت مدیریت دسته‌بندی
 function CategoryManager() {
   const [categories, setCategories] = useState([]);
@@ -427,19 +570,16 @@ const renderCategoryTree = (cats, level = 0) => {
       <h2 className="text-2xl font-bold mb-4">مدیریت دسته‌بندی‌ها</h2>
       
       <div className="mb-4">
-        <button 
-          className="bg-green-600 text-white px-4 py-2 rounded"
-          onClick={() => alert('فرم افزودن هنوز پیاده‌سازی نشده')}
-        >
-          افزودن دسته جدید
-        </button>
-        <button 
-          className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
-          onClick={() => navigate('/admin/dashboard')}
-        >
-          بازگشت
-        </button>
-      </div>
+  <Link to="/admin/categories/add" className="bg-green-600 text-white px-4 py-2 rounded">
+    افزودن دسته جدید
+  </Link>
+  <button 
+    className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+    onClick={() => navigate('/admin/dashboard')}
+  >
+    بازگشت
+  </button>
+</div>
 
       {loading ? (
         <p>در حال بارگذاری...</p>
@@ -857,6 +997,7 @@ function AppContent() {
         <Route path="/register" element={<Register />} />
         <Route path="/admin/add-product" element={<AddProduct />} />
         <Route path="/admin/categories" element={<CategoryManager />} />
+        <Route path="/admin/categories/add" element={<AddCategory />} />
       </Routes>
     </div>
   );
