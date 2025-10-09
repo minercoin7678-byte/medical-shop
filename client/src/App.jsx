@@ -384,30 +384,43 @@ function CategoryManager() {
   }, []);
 
   // نمایش درختی
-  const renderCategoryTree = (cats, level = 0) => {
-    return cats.map(cat => (
-      <div key={cat.id} style={{ marginLeft: `${level * 20}px` }}>
-        <div className="flex items-center justify-between border p-2 mb-1">
-          <span><strong>{cat.name}</strong> ({cat.slug})</span>
-          <div>
-            <button 
-              className="bg-blue-500 text-white px-2 py-1 rounded text-sm mr-1"
-              onClick={() => alert('ویرایش هنوز پیاده‌سازی نشده')}
-            >
-              ویرایش
-            </button>
-            <button 
-              className="bg-red-500 text-white px-2 py-1 rounded text-sm"
-              onClick={() => alert('حذف هنوز پیاده‌سازی نشده')}
-            >
-              حذف
-            </button>
-          </div>
+  // نمایش درختی با ساختار بصری واضح
+const renderCategoryTree = (cats, level = 0) => {
+  return cats.map(cat => (
+    <div key={cat.id} className="mb-1">
+      <div 
+        className="flex items-center border rounded p-2 bg-gray-50"
+        style={{ 
+          marginRight: `${level * 20}px`,
+          marginLeft: `${level * 20}px`,
+          borderLeft: level > 0 ? '3px solid #3b82f6' : 'none'
+        }}
+      >
+        <span className="font-medium">{cat.name}</span>
+        <span className="text-sm text-gray-500 mr-2">({cat.slug})</span>
+        <div className="ml-auto flex gap-1">
+          <button 
+            className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded"
+            onClick={() => alert('ویرایش هنوز فعال نیست')}
+          >
+            ویرایش
+          </button>
+          <button 
+            className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded"
+            onClick={() => alert('حذف هنوز فعال نیست')}
+          >
+            حذف
+          </button>
         </div>
-        {cat.children && cat.children.length > 0 && renderCategoryTree(cat.children, level + 1)}
       </div>
-    ));
-  };
+      {cat.children && cat.children.length > 0 && (
+        <div className="mt-1">
+          {renderCategoryTree(cat.children, level + 1)}
+        </div>
+      )}
+    </div>
+  ));
+};
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
