@@ -137,5 +137,105 @@ router.get('/users', adminAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch users.' });
   }
 });
+// GET /admin/categories → لیست درختی دسته‌بندی‌ها
+router.get('/categories', adminAuth, async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT id, name, slug, parent_id, description
+      FROM categories
+      ORDER BY created_at ASC
+    `);
+    
+    // تبدیل به ساختار درختی
+    const categories = result.rows;
+    const map = {};
+    const roots = [];
 
+    categories.forEach(cat => {
+      map[cat.id] = { ...cat, children: [] };
+    });
+
+    categories.forEach(cat => {
+      if (cat.parent_id === null) {
+        roots.push(map[cat.id]);
+      } else {
+        if (map[cat.parent_id]) {
+          map[cat.parent_id].children.push(map[cat.id]);
+        }
+      }
+    });
+
+    res.json(roots);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch categories.' });
+  }
+});
+
+// POST /admin/categories → افزودن دسته جدید
+router.post('/categories', adminAuth, async (req, res) => {
+  const { name, slug, parent_id, description } = req.body;
+  
+  if (!name || !slug) {
+    return res.status(400).json({ error: 'Name and slug are required.' });
+  }
+
+  try {
+    const result = await db.query(
+      `INSERT INTO categories (name, slug, parent_id, description)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [name, slug, parent_id || null, description]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to add category.' });
+  }
+});
+
+// PUT /admin/categories/:id → ویرایش دسته
+router.put('/categories/:id', adminAuth, async (req, res) => {
+  const { id } = req.params;
+  const { name, slug, parent_id, description } = req.body;
+
+  try {
+    const result = await db.query(
+      `UPDATE categories
+       SET name = $1, slug = $2, parent_id = $3, description = $4
+       WHERE id = $5
+       RETURNING *`,
+      [name, slug, parent_id || null, description, id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Category not found.' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update category.' });
+  }
+});
+
+// DELETE /admin/categories/:id → حذف دسته
+router.delete('/categories/:id', adminAuth, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await db.query(
+      'DELETE FROM categories WHERE id = $1 RETURNING *',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Category not found.' });
+    }
+
+    res.json({ message: 'Category deleted successfully!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to delete category.' });
+  }
+});
 module.exports = router;

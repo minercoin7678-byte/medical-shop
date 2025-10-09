@@ -355,6 +355,95 @@ function AddProduct() {
     </div>
   );
 }
+// کامپوننت مدیریت دسته‌بندی
+function CategoryManager() {
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  // دریافت لیست دسته‌ها
+  const fetchCategories = () => {
+    const token = localStorage.getItem('token');
+    fetch('https://medical-shop-backend-v1u1.onrender.com/api/admin/categories', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setCategories(data);
+        setLoading(false);
+      })
+      .catch(() => {
+  setError('خطا در دریافت دسته‌بندی‌ها');
+  setLoading(false);
+});
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // نمایش درختی
+  const renderCategoryTree = (cats, level = 0) => {
+    return cats.map(cat => (
+      <div key={cat.id} style={{ marginLeft: `${level * 20}px` }}>
+        <div className="flex items-center justify-between border p-2 mb-1">
+          <span><strong>{cat.name}</strong> ({cat.slug})</span>
+          <div>
+            <button 
+              className="bg-blue-500 text-white px-2 py-1 rounded text-sm mr-1"
+              onClick={() => alert('ویرایش هنوز پیاده‌سازی نشده')}
+            >
+              ویرایش
+            </button>
+            <button 
+              className="bg-red-500 text-white px-2 py-1 rounded text-sm"
+              onClick={() => alert('حذف هنوز پیاده‌سازی نشده')}
+            >
+              حذف
+            </button>
+          </div>
+        </div>
+        {cat.children && cat.children.length > 0 && renderCategoryTree(cat.children, level + 1)}
+      </div>
+    ));
+  };
+
+  return (
+    <div className="p-6 max-w-4xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">مدیریت دسته‌بندی‌ها</h2>
+      
+      <div className="mb-4">
+        <button 
+          className="bg-green-600 text-white px-4 py-2 rounded"
+          onClick={() => alert('فرم افزودن هنوز پیاده‌سازی نشده')}
+        >
+          افزودن دسته جدید
+        </button>
+        <button 
+          className="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+          onClick={() => navigate('/admin/dashboard')}
+        >
+          بازگشت
+        </button>
+      </div>
+
+      {loading ? (
+        <p>در حال بارگذاری...</p>
+      ) : error ? (
+        <p className="text-red-600">{error}</p>
+      ) : (
+        <div>
+          {categories.length === 0 ? (
+            <p>هیچ دسته‌بندی‌ای وجود ندارد.</p>
+          ) : (
+            renderCategoryTree(categories)
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 // کامپوننت داشبورد ادمین (کامل‌شده)
 // کامپوننت داشبورد ادمین (نسخه ایمن و کامل)
 function AdminDashboard() {
@@ -530,6 +619,9 @@ function AdminDashboard() {
   <Link to="/admin/add-product" className="bg-blue-600 text-white px-4 py-2 rounded">
     افزودن محصول جدید
   </Link>
+  <Link to="/admin/categories" className="bg-purple-600 text-white px-4 py-2 rounded mr-2">
+  مدیریت دسته‌بندی‌ها
+</Link>
 </div>
       <button
         onClick={handleLogout}
@@ -751,6 +843,7 @@ function AppContent() {
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin/add-product" element={<AddProduct />} />
+        <Route path="/admin/categories" element={<CategoryManager />} />
       </Routes>
     </div>
   );
