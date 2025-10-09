@@ -62,6 +62,7 @@ function Home() {
   );
 }
 
+// کامپوننت لاگین واحد (برای همه کاربران)
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -78,14 +79,19 @@ function Login() {
       .then(data => {
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        navigate('/dashboard');
+        // هدایت بر اساس نقش
+        if (data.user.role === 'admin') {
+          navigate('/admin/dashboard');
+        } else {
+          navigate('/dashboard');
+        }
       })
       .catch(err => setError(err.message));
   };
 
   return (
     <div className="p-6 max-w-md mx-auto">
-      <h2 className="text-2xl font-bold mb-4">ورود کاربر</h2>
+      <h2 className="text-2xl font-bold mb-4">ورود</h2>
       {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
       <form onSubmit={handleSubmit}>
         <input
@@ -526,41 +532,42 @@ function CategoryManager() {
     fetchCategories();
   }, []);
 
-  // نمایش درختی
-  // نمایش درختی با ساختار بصری واضح
+  
 // نمایش درختی با رنگ‌بندی سلسله‌مراتبی
 const renderCategoryTree = (cats, level = 0) => {
   return cats.map(cat => {
     // تعیین رنگ بر اساس سطح
-    let bgColor = 'bg-red-100 border-red-300'; // سطح 0: قرمز
+    let bgColor = 'bg-red-100 border-red-500'; // سطح 0: قرمز
     if (level === 1) {
-      bgColor = 'bg-blue-100 border-blue-300'; // سطح 1: آبی
+      bgColor = 'bg-blue-100 border-blue-500'; // سطح 1: آبی
     } else if (level >= 2) {
-      bgColor = 'bg-yellow-100 border-yellow-300'; // سطح 2+: زرد
+      bgColor = 'bg-yellow-100 border-yellow-500'; // سطح 2+: زرد
     }
 
     return (
       <div key={cat.id} className="mb-2">
-        <div className={`flex items-center rounded p-2 border ${bgColor}`}>
-          <span className="font-medium">{cat.name}</span>
-          <span className="text-sm text-gray-600 mr-2">({cat.slug})</span>
-          <div className="ml-auto flex gap-1">
+        <div className={`flex items-center justify-between rounded p-3 border ${bgColor}`}>
+          <div>
+            <span className="font-bold">{cat.name}</span>
+            <span className="text-sm text-gray-600 ml-2">({cat.slug})</span>
+          </div>
+          <div className="flex gap-2">
             <button 
-              className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 rounded"
-              onClick={() => alert('ویرایش هنوز فعال نیست')}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded"
+              onClick={() => alert('ویرایش')}
             >
               ویرایش
             </button>
             <button 
-              className="bg-red-500 hover:bg-red-600 text-white text-xs px-2 py-1 rounded"
-              onClick={() => alert('حذف هنوز فعال نیست')}
+              className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+              onClick={() => alert('حذف')}
             >
               حذف
             </button>
           </div>
         </div>
         {cat.children && cat.children.length > 0 && (
-          <div className="pl-4">
+          <div className="mt-1 ml-4">
             {renderCategoryTree(cat.children, level + 1)}
           </div>
         )}
@@ -939,17 +946,22 @@ function Cart() {
 
 function AppContent() {
   const [user, setUser] = useState(null);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
+    // بارگذاری اولیه از localStorage
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       try {
         setUser(JSON.parse(storedUser));
       } catch {
+        // اگر داده نامعتبر بود، نادیده بگیر
         setUser(null);
       }
     }
+    setLoadingUser(false);
 
+    // تابع بدون پارامتر برای هندل تغییرات localStorage
     const handleStorageChange = () => {
       const updatedUser = localStorage.getItem('user');
       if (updatedUser) {
@@ -967,23 +979,24 @@ function AppContent() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
+  if (loadingUser) {
+    return <div className="p-6">در حال بارگذاری...</div>;
+  }
+
   return (
     <div className="p-6">
       <nav className="mb-6">
         <Link to="/" className="mr-2">خانه</Link>
         {' - '}
         <Link to="/cart" className="mr-2">سبد خرید</Link>
-        {!user && (
+        {!user ? (
           <>
             {' - '}
-            <Link to="/login" className="mr-2">ورود کاربر</Link>
-            {' - '}
-            <Link to="/admin/login" className="mr-2">ورود ادمین</Link>
+            <Link to="/login" className="mr-2">ورود</Link>
             {' - '}
             <Link to="/register" className="mr-2">ثبت‌نام</Link>
           </>
-        )}
-        {user && (
+        ) : (
           <>
             {' - '}
             <Link to="/dashboard">داشبورد</Link>
@@ -995,11 +1008,9 @@ function AppContent() {
         <Route path="/" element={<Home />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/admin/add-product" element={<AddProduct />} />
         <Route path="/admin/categories" element={<CategoryManager />} />
         <Route path="/admin/categories/add" element={<AddCategory />} />
       </Routes>
