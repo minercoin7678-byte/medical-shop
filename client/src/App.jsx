@@ -534,32 +534,40 @@ function CategoryManager() {
 
   
 // نمایش درختی با رنگ‌بندی سلسله‌مراتبی
+// نمایش درختی با رنگ‌بندی سلسله‌مراتبی واضح
 const renderCategoryTree = (cats, level = 0) => {
   return cats.map(cat => {
     // تعیین رنگ بر اساس سطح
-    let bgColor = 'bg-red-100 border-red-500'; // سطح 0: قرمز
+    let bgColor = 'bg-red-100 border-red-500'; // سطح 0: قرمز (دسته اصلی)
+    let textColor = 'text-red-800';
     if (level === 1) {
       bgColor = 'bg-blue-100 border-blue-500'; // سطح 1: آبی
+      textColor = 'text-blue-800';
     } else if (level >= 2) {
       bgColor = 'bg-yellow-100 border-yellow-500'; // سطح 2+: زرد
+      textColor = 'text-yellow-800';
     }
 
     return (
-      <div key={cat.id} className="mb-2">
-        <div className={`flex items-center justify-between rounded p-3 border ${bgColor}`}>
-          <div>
-            <span className="font-bold">{cat.name}</span>
-            <span className="text-sm text-gray-600 ml-2">({cat.slug})</span>
+      <div key={cat.id} className="mb-3">
+        <div className={`flex items-center justify-between rounded-lg p-3 border ${bgColor}`}>
+          <div className="flex items-center">
+            {/* نماد سلسله‌مراتب */}
+            <span className="mr-2 text-lg">📁</span>
+            <div>
+              <span className={`font-bold ${textColor}`}>{cat.name}</span>
+              <span className="text-sm text-gray-600 ml-2">({cat.slug})</span>
+            </div>
           </div>
           <div className="flex gap-2">
             <button 
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1 rounded"
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded"
               onClick={() => alert('ویرایش')}
             >
               ویرایش
             </button>
             <button 
-              className="bg-red-600 hover:bg-red-700 text-white text-xs px-2 py-1 rounded"
+              className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded"
               onClick={() => alert('حذف')}
             >
               حذف
@@ -567,7 +575,7 @@ const renderCategoryTree = (cats, level = 0) => {
           </div>
         </div>
         {cat.children && cat.children.length > 0 && (
-          <div className="mt-1 ml-4">
+          <div className="mt-2 ml-6">
             {renderCategoryTree(cat.children, level + 1)}
           </div>
         )}
