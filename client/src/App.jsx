@@ -514,6 +514,7 @@ function AddCategory() {
 // کامپوننت ویرایش محصول
 // کامپوننت ویرایش محصول (با انتخاب دسته‌بندی از لیست)
 // کامپوننت ویرایش محصول (با category_id)
+// کامپوننت ویرایش محصول (نسخه ایمن‌تر)
 function EditProduct() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -523,7 +524,6 @@ function EditProduct() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  // تبدیل درخت به لیست مسطح
   const flattenCategories = (cats, level = 0) => {
     let result = [];
     cats.forEach(cat => {
@@ -538,11 +538,15 @@ function EditProduct() {
     return result;
   };
 
-  // بارگذاری داده‌ها
   useEffect(() => {
     const token = localStorage.getItem('token');
     
-    // دریافت دسته‌بندی‌ها
+    // ✅ چک اولیه توکن
+    if (!token) {
+      navigate('/admin/login');
+      return;
+    }
+
     fetch('https://medical-shop-backend-v1u1.onrender.com/api/admin/categories', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -552,7 +556,6 @@ function EditProduct() {
       })
       .catch(err => console.error('Error loading categories:', err));
 
-    // دریافت محصول
     fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -567,27 +570,35 @@ function EditProduct() {
       .catch(err => {
         setError(err.message);
         setLoading(false);
+        // ✅ اگر خطای 401 بود، به لاگین برگرد
+        if (err.message && err.message.includes('Access token')) {
+          navigate('/admin/login');
+        }
       });
-  }, [id]);
+  }, [id, navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    // اعتبارسنجی
+    const token = localStorage.getItem('token');
+    if (!token) { // ✅ چک مجدد قبل از ارسال
+      navigate('/admin/login');
+      return;
+    }
+
     if (!product.name || !product.price || !product.stock || !product.category_id) {
       setError('لطفاً همه فیلدهای اجباری را پر کنید.');
       return;
     }
 
-    const token = localStorage.getItem('token');
     const payload = {
       name: product.name.trim(),
       description: product.description?.trim() || '',
       price: parseFloat(product.price),
       stock: parseInt(product.stock),
-      category_id: parseInt(product.category_id), // ✅ تغییر اصلی: category_id
+      category_id: parseInt(product.category_id),
       image_url: product.image_url?.trim() || ''
     };
 
@@ -659,7 +670,6 @@ function EditProduct() {
           className="w-full p-2 border rounded"
           required
         />
-        {/* ✅ انتخاب دسته‌بندی با category_id */}
         <select
           value={product.category_id || ''}
           onChange={(e) => setProduct({...product, category_id: e.target.value})}
