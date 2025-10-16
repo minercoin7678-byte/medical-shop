@@ -512,27 +512,59 @@ function AddCategory() {
   );
 }
 // کامپوننت ویرایش محصول
+// کامپوننت ویرایش محصول (با انتخاب دسته‌بندی از لیست)
 function EditProduct() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  // بارگذاری اطلاعات محصول
+  // تابع تبدیل درخت به لیست مسطح برای select
+  const flattenCategories = (cats, level = 0) => {
+    let result = [];
+    cats.forEach(cat => {
+      result.push({
+        id: cat.id,
+        name: `${'—'.repeat(level)} ${cat.name}`
+      });
+      if (cat.children && cat.children.length > 0) {
+        result = result.concat(flattenCategories(cat.children, level + 1));
+      }
+    });
+    return result;
+  };
+
+  // بارگذاری اطلاعات محصول و لیست دسته‌بندی‌ها
   useEffect(() => {
     const token = localStorage.getItem('token');
-    fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
+    
+    // دریافت لیست دسته‌بندی‌ها
+    fetch('https://medical-shop-backend-v1u1.onrender.com/api/admin/categories', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
+      .then(data => {
+        setCategories(flattenCategories(data));
+      })
+      .catch(err => console.error('Error loading categories:', err));
+
+    // دریافت اطلاعات محصول
+    fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('محصول یافت نشد.');
+        return res.json();
+      })
       .then(data => {
         setProduct(data);
         setLoading(false);
       })
       .catch(err => {
-        setError('خطا در بارگذاری اطلاعات محصول');
+        setError(err.message);
         setLoading(false);
       });
   }, [id]);
@@ -572,7 +604,7 @@ function EditProduct() {
   };
 
   if (loading) return <div className="p-6">در حال بارگذاری...</div>;
-  if (!product) return <div className="p-6 text-red-600">محصول یافت نشد.</div>;
+  if (!product) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
@@ -613,14 +645,20 @@ function EditProduct() {
           className="w-full p-2 border rounded"
           required
         />
-        <input
-          type="text"
+        {/* ✅ انتخاب دسته‌بندی از لیست کشویی */}
+        <select
           value={product.category || ''}
           onChange={(e) => setProduct({...product, category: e.target.value})}
-          placeholder="دسته‌بندی *"
           className="w-full p-2 border rounded"
           required
-        />
+        >
+          <option value="">انتخاب دسته‌بندی *</option>
+          {categories.map(cat => (
+            <option key={cat.id} value={cat.name}>
+              {cat.name}
+            </option>
+          ))}
+        </select>
         <input
           type="url"
           value={product.image_url || ''}
