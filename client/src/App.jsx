@@ -513,6 +513,7 @@ function AddCategory() {
 }
 // کامپوننت ویرایش محصول
 // کامپوننت ویرایش محصول (با انتخاب دسته‌بندی از لیست)
+// کامپوننت ویرایش محصول (با category_id)
 function EditProduct() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
@@ -522,7 +523,7 @@ function EditProduct() {
   const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
-  // تابع تبدیل درخت به لیست مسطح برای select
+  // تبدیل درخت به لیست مسطح
   const flattenCategories = (cats, level = 0) => {
     let result = [];
     cats.forEach(cat => {
@@ -537,11 +538,11 @@ function EditProduct() {
     return result;
   };
 
-  // بارگذاری اطلاعات محصول و لیست دسته‌بندی‌ها
+  // بارگذاری داده‌ها
   useEffect(() => {
     const token = localStorage.getItem('token');
     
-    // دریافت لیست دسته‌بندی‌ها
+    // دریافت دسته‌بندی‌ها
     fetch('https://medical-shop-backend-v1u1.onrender.com/api/admin/categories', {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -551,7 +552,7 @@ function EditProduct() {
       })
       .catch(err => console.error('Error loading categories:', err));
 
-    // دریافت اطلاعات محصول
+    // دریافت محصول
     fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
@@ -574,15 +575,26 @@ function EditProduct() {
     setError('');
     setSuccess('');
 
+    // اعتبارسنجی
+    if (!product.name || !product.price || !product.stock || !product.category_id) {
+      setError('لطفاً همه فیلدهای اجباری را پر کنید.');
+      return;
+    }
+
     const token = localStorage.getItem('token');
     const payload = {
-      name: product.name,
-      description: product.description,
+      name: product.name.trim(),
+      description: product.description?.trim() || '',
       price: parseFloat(product.price),
       stock: parseInt(product.stock),
-      category: product.category,
-      image_url: product.image_url
+      category_id: parseInt(product.category_id), // ✅ تغییر اصلی: category_id
+      image_url: product.image_url?.trim() || ''
     };
+
+    if (isNaN(payload.price) || isNaN(payload.stock) || isNaN(payload.category_id)) {
+      setError('مقادیر وارد شده معتبر نیستند.');
+      return;
+    }
 
     fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
       method: 'PUT',
@@ -593,7 +605,9 @@ function EditProduct() {
       body: JSON.stringify(payload)
     })
       .then(res => {
-        if (!res.ok) throw new Error('خطا در به‌روزرسانی محصول');
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.error || 'خطا در به‌روزرسانی محصول'); });
+        }
         return res.json();
       })
       .then(() => {
@@ -645,16 +659,16 @@ function EditProduct() {
           className="w-full p-2 border rounded"
           required
         />
-        {/* ✅ انتخاب دسته‌بندی از لیست کشویی */}
+        {/* ✅ انتخاب دسته‌بندی با category_id */}
         <select
-          value={product.category || ''}
-          onChange={(e) => setProduct({...product, category: e.target.value})}
+          value={product.category_id || ''}
+          onChange={(e) => setProduct({...product, category_id: e.target.value})}
           className="w-full p-2 border rounded"
           required
         >
           <option value="">انتخاب دسته‌بندی *</option>
           {categories.map(cat => (
-            <option key={cat.id} value={cat.name}>
+            <option key={cat.id} value={cat.id}>
               {cat.name}
             </option>
           ))}
