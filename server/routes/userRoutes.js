@@ -1,9 +1,8 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken'); // ⚠️ این رو بالا اضافه کن
+const jwt = require('jsonwebtoken');
 const db = require('../db');
 const router = express.Router();
-
 
 // Middleware برای احراز هویت
 const authenticateToken = (req, res, next) => {
@@ -37,7 +36,7 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email already registered.' });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10); // ⚠️ این خط فقط یک‌بار اجرا می‌شه — موقع ثبت‌نام
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.query(
       `INSERT INTO users (name, email, password, phone, address)
@@ -56,7 +55,6 @@ router.post('/register', async (req, res) => {
 });
 
 // POST /api/login
-// POST /api/login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -71,16 +69,18 @@ router.post('/login', async (req, res) => {
     }
 
     const user = result.rows[0];
-    const isMatch = await bcrypt.compare(password, user.password); // ⚠️ این خط رمز عبور رو با هش مقایسه می‌کنه
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ error: 'Invalid password.' });
     }
 
-    // ایجاد توکن
+    // ✅ تنظیم مدت اعتبار بر اساس نقش کاربر
+    const expiresIn = user.role === 'admin' ? '2h' : '24h';
+
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn }
     );
 
     const { password: _, ...userWithoutPassword } = user;
@@ -104,5 +104,4 @@ router.get('/dashboard', authenticateToken, (req, res) => {
   });
 });
 
-// ⚠️ این خط حتماً آخر فایل باشه
 module.exports = router;

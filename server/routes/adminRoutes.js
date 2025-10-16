@@ -138,6 +138,7 @@ router.get('/users', adminAuth, async (req, res) => {
   }
 });
 // GET /admin/categories → لیست درختی دسته‌بندی‌ها
+// GET /api/admin/categories → لیست درختی دسته‌بندی‌ها
 router.get('/categories', adminAuth, async (req, res) => {
   try {
     const result = await db.query(`
@@ -194,27 +195,31 @@ router.post('/categories', adminAuth, async (req, res) => {
 });
 
 // PUT /admin/categories/:id → ویرایش دسته
-router.put('/categories/:id', adminAuth, async (req, res) => {
+// PUT /api/admin/products/:id → ویرایش محصول
+router.put('/products/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
-  const { name, slug, parent_id, description } = req.body;
+  const { name, description, price, stock, category_id, image_url } = req.body;
 
   try {
     const result = await db.query(
-      `UPDATE categories
-       SET name = $1, slug = $2, parent_id = $3, description = $4
-       WHERE id = $5
+      `UPDATE products
+       SET name = $1, description = $2, price = $3, stock = $4, category_id = $5, image_url = $6
+       WHERE id = $7
        RETURNING *`,
-      [name, slug, parent_id || null, description, id]
+      [name, description, price, stock, category_id, image_url, id]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Category not found.' });
+      return res.status(404).json({ error: 'Product not found.' });
     }
 
-    res.json(result.rows[0]);
+    res.json({
+      message: 'Product updated successfully!',
+      product: result.rows[0]
+    });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: 'Failed to update category.' });
+    res.status(500).json({ error: 'Failed to update product.' });
   }
 });
 
@@ -236,6 +241,23 @@ router.delete('/categories/:id', adminAuth, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete category.' });
+  }
+});
+// GET /api/admin/products/:id → دریافت یک محصول
+router.get('/products/:id', adminAuth, async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    const result = await db.query('SELECT * FROM products WHERE id = $1', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Product not found.' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch product.' });
   }
 });
 module.exports = router;

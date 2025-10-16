@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { HashRouter, Routes, Route, Link, useNavigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
 import api from './services/api';
 import './App.css';
 
@@ -72,14 +72,19 @@ function Login() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
-    api('/login', {
+    const token = localStorage.getItem('token');
+    fetch('https://medical-shop-backend-v1u1.onrender.com/api/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
     })
+      .then(res => res.json())
       .then(data => {
+        if (data.error) throw new Error(data.error);
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
-        // هدایت بر اساس نقش
         if (data.user.role === 'admin') {
           navigate('/admin/dashboard');
         } else {
@@ -110,7 +115,9 @@ function Login() {
           className="w-full p-2 border mb-2 rounded"
           required
         />
-        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">ورود</button>
+        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
+          ورود
+        </button>
       </form>
     </div>
   );
@@ -504,6 +511,217 @@ function AddCategory() {
     </div>
   );
 }
+// کامپوننت ویرایش محصول
+function EditProduct() {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
+
+  // بارگذاری اطلاعات محصول
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setProduct(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('خطا در بارگذاری اطلاعات محصول');
+        setLoading(false);
+      });
+  }, [id]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    const token = localStorage.getItem('token');
+    const payload = {
+      name: product.name,
+      description: product.description,
+      price: parseFloat(product.price),
+      stock: parseInt(product.stock),
+      category: product.category,
+      image_url: product.image_url
+    };
+
+    fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(res => {
+        if (!res.ok) throw new Error('خطا در به‌روزرسانی محصول');
+        return res.json();
+      })
+      .then(() => {
+        setSuccess('محصول با موفقیت به‌روزرسانی شد!');
+        setTimeout(() => navigate('/admin/products'), 1500);
+      })
+      .catch(err => setError(err.message));
+  };
+
+  if (loading) return <div className="p-6">در حال بارگذاری...</div>;
+  if (!product) return <div className="p-6 text-red-600">محصول یافت نشد.</div>;
+
+  return (
+    <div className="p-6 max-w-2xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">ویرایش محصول</h2>
+      
+      {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
+      {success && <div className="bg-green-100 text-green-700 p-2 mb-4 rounded">{success}</div>}
+      
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <input
+          type="text"
+          value={product.name || ''}
+          onChange={(e) => setProduct({...product, name: e.target.value})}
+          placeholder="نام محصول *"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <textarea
+          value={product.description || ''}
+          onChange={(e) => setProduct({...product, description: e.target.value})}
+          placeholder="توضیحات"
+          className="w-full p-2 border rounded"
+          rows="3"
+        />
+        <input
+          type="number"
+          value={product.price || ''}
+          onChange={(e) => setProduct({...product, price: e.target.value})}
+          placeholder="قیمت (تومان) *"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="number"
+          value={product.stock || ''}
+          onChange={(e) => setProduct({...product, stock: e.target.value})}
+          placeholder="موجودی *"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="text"
+          value={product.category || ''}
+          onChange={(e) => setProduct({...product, category: e.target.value})}
+          placeholder="دسته‌بندی *"
+          className="w-full p-2 border rounded"
+          required
+        />
+        <input
+          type="url"
+          value={product.image_url || ''}
+          onChange={(e) => setProduct({...product, image_url: e.target.value})}
+          placeholder="لینک تصویر (اختیاری)"
+          className="w-full p-2 border rounded"
+        />
+        <div className="flex gap-2">
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded">
+            ذخیره تغییرات
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/admin/products')}
+            className="bg-gray-500 text-white px-4 py-2 rounded"
+          >
+            لغو
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+// کامپوننت مدیریت محصولات
+function ProductManager() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    fetch('https://medical-shop-backend-v1u1.onrender.com/api/admin/products', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading products:', err);
+        setLoading(false);
+      });
+  }, []);
+
+  return (
+    <div className="p-6 max-w-6xl mx-auto">
+      <h2 className="text-2xl font-bold mb-4">مدیریت محصولات</h2>
+      
+      <div className="mb-4">
+        <Link to="/admin/add-product" className="bg-green-600 text-white px-4 py-2 rounded mr-2">
+          افزودن محصول جدید
+        </Link>
+        <button 
+          className="bg-gray-500 text-white px-4 py-2 rounded"
+          onClick={() => navigate('/admin/dashboard')}
+        >
+          بازگشت
+        </button>
+      </div>
+
+      {loading ? (
+        <p>در حال بارگذاری...</p>
+      ) : products.length === 0 ? (
+        <p>محصولی وجود ندارد.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border">
+            <thead>
+              <tr>
+                <th className="border p-2">نام</th>
+                <th className="border p-2">قیمت</th>
+                <th className="border p-2">موجودی</th>
+                <th className="border p-2">دسته‌بندی</th>
+                <th className="border p-2">عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map(product => (
+                <tr key={product.id}>
+                  <td className="border p-2">{product.name}</td>
+                  <td className="border p-2">{product.price.toLocaleString()} تومان</td>
+                  <td className="border p-2">{product.stock || 'نامشخص'}</td>
+                  <td className="border p-2">{product.category || '-'}</td>
+                  <td className="border p-2">
+                    <button
+                      onClick={() => navigate(`/admin/products/edit/${product.id}`)}
+                      className="bg-blue-500 text-white px-3 py-1 rounded text-sm"
+                    >
+                      ویرایش
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
 // کامپوننت مدیریت دسته‌بندی
 function CategoryManager() {
   const [categories, setCategories] = useState([]);
@@ -537,45 +755,29 @@ function CategoryManager() {
 // نمایش درختی با رنگ‌بندی سلسله‌مراتبی واضح
 const renderCategoryTree = (cats, level = 0) => {
   return cats.map(cat => {
-    // تعیین رنگ بر اساس سطح
-    let bgColor = 'bg-red-100 border-red-500'; // سطح 0: قرمز (دسته اصلی)
-    let textColor = 'text-red-800';
-    if (level === 1) {
-      bgColor = 'bg-blue-100 border-blue-500'; // سطح 1: آبی
-      textColor = 'text-blue-800';
-    } else if (level >= 2) {
-      bgColor = 'bg-yellow-100 border-yellow-500'; // سطح 2+: زرد
-      textColor = 'text-yellow-800';
-    }
+    // رنگ‌بندی
+    const getStyle = (level) => {
+      if (level === 0) return { backgroundColor: '#fee2e2', border: '1px solid #fecaca' };
+      if (level === 1) return { backgroundColor: '#dbeafe', border: '1px solid #bfdbfe' };
+      return { backgroundColor: '#fef9c3', border: '1px solid #fde047' };
+    };
 
     return (
-      <div key={cat.id} className="mb-3">
-        <div className={`flex items-center justify-between rounded-lg p-3 border ${bgColor}`}>
-          <div className="flex items-center">
-            {/* نماد سلسله‌مراتب */}
-            <span className="mr-2 text-lg">📁</span>
-            <div>
-              <span className={`font-bold ${textColor}`}>{cat.name}</span>
-              <span className="text-sm text-gray-600 ml-2">({cat.slug})</span>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <button 
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded"
-              onClick={() => alert('ویرایش')}
-            >
-              ویرایش
-            </button>
-            <button 
-              className="bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded"
-              onClick={() => alert('حذف')}
-            >
-              حذف
-            </button>
+      <div key={cat.id} className="mb-2">
+        <div 
+          className="flex items-center justify-between rounded p-2"
+          style={getStyle(level)}
+        >
+          <span className="font-medium">{cat.name}</span>
+          <span className="text-sm text-gray-600">({cat.slug})</span>
+          <div className="flex gap-1">
+            <button className="bg-blue-500 text-white text-xs px-2 py-1 rounded">ویرایش</button>
+            <button className="bg-red-500 text-white text-xs px-2 py-1 rounded">حذف</button>
           </div>
         </div>
+        {/* نمایش زیرمجموعه‌ها با فاصله سلسله‌مراتبی */}
         {cat.children && cat.children.length > 0 && (
-          <div className="mt-2 ml-6">
+          <div style={{ paddingLeft: `${(level + 1) * 20}px`, marginTop: '8px' }}>
             {renderCategoryTree(cat.children, level + 1)}
           </div>
         )}
@@ -679,7 +881,11 @@ function AdminDashboard() {
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">داشبورد ادمین</h2>
-      
+      <div className="mb-6">
+  <Link to="/admin/products" className="bg-purple-600 text-white px-4 py-2 rounded">
+    مدیریت محصولات
+  </Link>
+</div>
       <div className="mb-6">
         <h3 className="text-xl font-bold mb-2">لیست محصولات</h3>
         {products.length === 0 ? (
@@ -957,30 +1163,44 @@ function AppContent() {
   const [loadingUser, setLoadingUser] = useState(true);
 
   useEffect(() => {
-    // بارگذاری اولیه از localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        // اگر داده نامعتبر بود، نادیده بگیر
+    const validateAndSetUser = () => {
+      const storedUser = localStorage.getItem('user');
+      const storedToken = localStorage.getItem('token');
+      
+      // اگر هر دو وجود ندارن، کاربر مهمان هست
+      if (!storedUser || !storedToken) {
         setUser(null);
+        setLoadingUser(false);
+        return;
       }
-    }
-    setLoadingUser(false);
 
-    // تابع بدون پارامتر برای هندل تغییرات localStorage
-    const handleStorageChange = () => {
-      const updatedUser = localStorage.getItem('user');
-      if (updatedUser) {
-        try {
-          setUser(JSON.parse(updatedUser));
-        } catch {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        
+        // اعتبارسنجی اولیه: چک کن فیلدهای ضروری وجود دارن
+        if (parsedUser.email && (parsedUser.role === 'user' || parsedUser.role === 'admin')) {
+          setUser(parsedUser);
+        } else {
+          // اگر داده نامعتبر بود، پاکش کن
+          localStorage.removeItem('user');
+          localStorage.removeItem('token');
           setUser(null);
         }
-      } else {
+      } catch (e) {
+        // اگر JSON نامعتبر بود، پاکش کن
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
         setUser(null);
       }
+      
+      setLoadingUser(false);
+    };
+
+    validateAndSetUser();
+
+    // نظارت بر تغییرات در تب‌های دیگه
+    const handleStorageChange = () => {
+      validateAndSetUser();
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -1021,6 +1241,9 @@ function AppContent() {
         <Route path="/register" element={<Register />} />
         <Route path="/admin/categories" element={<CategoryManager />} />
         <Route path="/admin/categories/add" element={<AddCategory />} />
+        <Route path="/admin/add-product" element={<AddProduct />} />
+        <Route path="/admin/products" element={<ProductManager />} />
+        <Route path="/admin/products/edit/:id" element={<EditProduct />} />
       </Routes>
     </div>
   );
