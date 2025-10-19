@@ -62,17 +62,19 @@ router.post('/products', adminAuth, async (req, res) => {
 });
 
 // PUT /api/admin/products/:id
+// PUT /api/admin/products/:id → ویرایش محصول
 router.put('/products/:id', adminAuth, async (req, res) => {
   const { id } = req.params;
-  const { name, description, price, stock, category, image_url } = req.body;
+  // ✅ فقط category_id — نه category
+  const { name, description, price, stock, category_id, image_url } = req.body;
 
   try {
     const result = await db.query(
       `UPDATE products
-       SET name = $1, description = $2, price = $3, stock = $4, category = $5, image_url = $6
+       SET name = $1, description = $2, price = $3, stock = $4, category_id = $5, image_url = $6
        WHERE id = $7
        RETURNING *`,
-      [name, description, price, stock, category, image_url, id]
+      [name, description, price, stock, category_id, image_url, id] // ✅ category_id
     );
 
     if (result.rows.length === 0) {
@@ -84,7 +86,7 @@ router.put('/products/:id', adminAuth, async (req, res) => {
       product: result.rows[0]
     });
   } catch (err) {
-    console.error(err);
+    console.error('Update error:', err);
     res.status(500).json({ error: 'Failed to update product.' });
   }
 });

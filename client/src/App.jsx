@@ -515,9 +515,10 @@ function AddCategory() {
 // کامپوننت ویرایش محصول (با انتخاب دسته‌بندی از لیست)
 // کامپوننت ویرایش محصول (با category_id)
 // کامپوننت ویرایش محصول (نسخه ایمن‌تر)
+// کامپوننت ویرایش محصول — نسخه نهایی و ایمن
 function EditProduct() {
   const { id } = useParams();
-  const [product, setProduct] = useState(null);
+  const [product, setProduct] = useState({ category_id: '' });
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -527,10 +528,7 @@ function EditProduct() {
   const flattenCategories = (cats, level = 0) => {
     let result = [];
     cats.forEach(cat => {
-      result.push({
-        id: cat.id,
-        name: `${'—'.repeat(level)} ${cat.name}`
-      });
+      result.push({ id: cat.id, name: `${'—'.repeat(level)} ${cat.name}` });
       if (cat.children && cat.children.length > 0) {
         result = result.concat(flattenCategories(cat.children, level + 1));
       }
@@ -540,8 +538,6 @@ function EditProduct() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    
-    // ✅ چک اولیه توکن
     if (!token) {
       navigate('/admin/login');
       return;
@@ -551,39 +547,27 @@ function EditProduct() {
       headers: { 'Authorization': `Bearer ${token}` }
     })
       .then(res => res.json())
-      .then(data => {
-        setCategories(flattenCategories(data));
-      })
-      .catch(err => console.error('Error loading categories:', err));
+      .then(data => setCategories(flattenCategories(data)))
+      .catch(err => console.error('Categories error:', err));
 
     fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
       headers: { 'Authorization': `Bearer ${token}` }
     })
-      .then(res => {
-        if (!res.ok) throw new Error('محصول یافت نشد.');
-        return res.json();
-      })
+      .then(res => res.json())
       .then(data => {
         setProduct(data);
         setLoading(false);
       })
       .catch(err => {
-        setError(err.message);
+        setError('محصول یافت نشد.');
         setLoading(false);
-        // ✅ اگر خطای 401 بود، به لاگین برگرد
-        if (err.message && err.message.includes('Access token')) {
-          navigate('/admin/login');
-        }
       });
   }, [id, navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
-    const token = localStorage.getItem('token');
-    if (!token) { // ✅ چک مجدد قبل از ارسال
+    const token = localStorage.getItem('token'); // ✅ همیشه جدید بخون
+    if (!token) {
       navigate('/admin/login');
       return;
     }
@@ -610,15 +594,13 @@ function EditProduct() {
     fetch(`https://medical-shop-backend-v1u1.onrender.com/api/admin/products/${id}`, {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`, // ✅ حتماً ارسال بشه
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(payload)
     })
       .then(res => {
-        if (!res.ok) {
-          return res.json().then(err => { throw new Error(err.error || 'خطا در به‌روزرسانی محصول'); });
-        }
+        if (!res.ok) throw new Error('خطا در به‌روزرسانی محصول');
         return res.json();
       })
       .then(() => {
@@ -629,12 +611,11 @@ function EditProduct() {
   };
 
   if (loading) return <div className="p-6">در حال بارگذاری...</div>;
-  if (!product) return <div className="p-6 text-red-600">{error}</div>;
+  if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">ویرایش محصول</h2>
-      
       {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
       {success && <div className="bg-green-100 text-green-700 p-2 mb-4 rounded">{success}</div>}
       
@@ -642,14 +623,14 @@ function EditProduct() {
         <input
           type="text"
           value={product.name || ''}
-          onChange={(e) => setProduct({...product, name: e.target.value})}
+          onChange={e => setProduct({...product, name: e.target.value})}
           placeholder="نام محصول *"
           className="w-full p-2 border rounded"
           required
         />
         <textarea
           value={product.description || ''}
-          onChange={(e) => setProduct({...product, description: e.target.value})}
+          onChange={e => setProduct({...product, description: e.target.value})}
           placeholder="توضیحات"
           className="w-full p-2 border rounded"
           rows="3"
@@ -657,7 +638,7 @@ function EditProduct() {
         <input
           type="number"
           value={product.price || ''}
-          onChange={(e) => setProduct({...product, price: e.target.value})}
+          onChange={e => setProduct({...product, price: e.target.value})}
           placeholder="قیمت (تومان) *"
           className="w-full p-2 border rounded"
           required
@@ -665,28 +646,26 @@ function EditProduct() {
         <input
           type="number"
           value={product.stock || ''}
-          onChange={(e) => setProduct({...product, stock: e.target.value})}
+          onChange={e => setProduct({...product, stock: e.target.value})}
           placeholder="موجودی *"
           className="w-full p-2 border rounded"
           required
         />
         <select
           value={product.category_id || ''}
-          onChange={(e) => setProduct({...product, category_id: e.target.value})}
+          onChange={e => setProduct({...product, category_id: e.target.value})}
           className="w-full p-2 border rounded"
           required
         >
           <option value="">انتخاب دسته‌بندی *</option>
           {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>
-              {cat.name}
-            </option>
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
         </select>
         <input
           type="url"
           value={product.image_url || ''}
-          onChange={(e) => setProduct({...product, image_url: e.target.value})}
+          onChange={e => setProduct({...product, image_url: e.target.value})}
           placeholder="لینک تصویر (اختیاری)"
           className="w-full p-2 border rounded"
         />
