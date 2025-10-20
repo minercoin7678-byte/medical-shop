@@ -29,6 +29,7 @@ const adminAuth = (req, res, next) => {
 // GET /api/admin/products → لیست همه محصولات با نام دسته‌بندی
 // GET /api/admin/products
 // GET /api/admin/products
+// GET /api/admin/products
 router.get('/products', adminAuth, async (req, res) => {
   try {
     const result = await db.query(`
@@ -40,7 +41,7 @@ router.get('/products', adminAuth, async (req, res) => {
         p.stock,
         p.image_url,
         p.category_id,
-        c.name AS category_name  -- ✅ دریافت نام دسته از جدول categories
+        c.name AS category_name  -- ✅ نام دسته‌بندی
       FROM products p
       LEFT JOIN categories c ON p.category_id = c.id  -- ✅ اتصال به جدول دسته‌بندی‌ها
       ORDER BY p.id ASC
