@@ -745,7 +745,7 @@ function ProductManager() {
                   <td className="border p-2">{product.name}</td>
                   <td className="border p-2">{product.price.toLocaleString()} تومان</td>
                   <td className="border p-2">{product.stock || 'نامشخص'}</td>
-                  <td className="border p-2">{product.category || '-'}</td>
+                  <td className="border p-2">{product.category_name || '-'}</td>
                   <td className="border p-2">
                     <button
                       onClick={() => navigate(`/admin/products/edit/${product.id}`)}
