@@ -61,6 +61,133 @@ function Home() {
     </div>
   );
 }
+// کامپوننت تغییر رمز عبور
+function ResetPassword() {
+  const { token } = useParams();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    
+    if (password !== confirmPassword) {
+      setMessage('رمزهای عبور مطابقت ندارند.');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setMessage('رمز عبور باید حداقل ۶ کاراکتر باشد.');
+      return;
+    }
+
+    try {
+      const data = await api('/reset-password', {
+        method: 'POST',
+        body: JSON.stringify({ token, newPassword: password })
+      });
+      alert('رمز عبور با موفقیت تغییر کرد. اکنون می‌توانید وارد شوید.');
+      navigate('/login');
+    } catch (err) {
+      setMessage(err.message || 'خطا در تغییر رمز عبور');
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-md mx-auto">
+      <h2 className="text-2xl font-bold mb-4">تغییر رمز عبور</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="رمز عبور جدید (حداقل ۶ کاراکتر)"
+          className="w-full p-2 border rounded mb-2"
+          required
+        />
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          placeholder="تکرار رمز عبور"
+          className="w-full p-2 border rounded mb-2"
+          required
+        />
+        <button type="submit" className="w-full bg-green-600 text-white p-2 rounded">
+          تغییر رمز عبور
+        </button>
+        {message && (
+          <div className="mt-2 p-2 bg-red-100 text-red-700 rounded">
+            {message}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => navigate('/login')}
+          className="mt-2 text-blue-600"
+        >
+          بازگشت به ورود
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// کامپوننت فراموشی رمز عبور
+function ForgotPassword() {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMessage('');
+    
+    try {
+      const data = await api('/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email })
+      });
+      setMessage(data.message);
+      setTimeout(() => navigate('/login'), 3000);
+    } catch (err) {
+      setMessage(err.message || 'خطا در ارسال درخواست');
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-md mx-auto">
+      <h2 className="text-2xl font-bold mb-4">فراموشی رمز عبور</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="ایمیل شما"
+          className="w-full p-2 border rounded mb-2"
+          required
+        />
+        <button type="submit" className="w-full bg-blue-600 text-white p-2 rounded">
+          ارسال لینک بازیابی
+        </button>
+        {message && (
+          <div className={`mt-2 p-2 rounded ${message.includes('خطا') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+            {message}
+          </div>
+        )}
+        <button
+          type="button"
+          onClick={() => navigate('/login')}
+          className="mt-2 text-blue-600"
+        >
+          بازگشت به ورود
+        </button>
+      </form>
+    </div>
+  );
+}
 
 // کامپوننت لاگین واحد (برای همه کاربران)
 function Login() {
@@ -96,6 +223,11 @@ function Login() {
 
   return (
     <div className="p-6 max-w-md mx-auto">
+      <div className="mt-2 text-center">
+  <Link to="/forgot-password" className="text-blue-600 text-sm hover:underline">
+    فراموشی رمز عبور؟
+  </Link>
+</div>
       <h2 className="text-2xl font-bold mb-4">ورود</h2>
       {error && <div className="bg-red-100 text-red-700 p-2 mb-4 rounded">{error}</div>}
       <form onSubmit={handleSubmit}>
@@ -1285,6 +1417,8 @@ function AppContent() {
         <Route path="/admin/add-product" element={<AddProduct />} />
         <Route path="/admin/products" element={<ProductManager />} />
         <Route path="/admin/products/edit/:id" element={<EditProduct />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
       </Routes>
     </div>
   );
