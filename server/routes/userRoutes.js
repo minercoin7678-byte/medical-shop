@@ -105,7 +105,6 @@ router.get('/dashboard', authenticateToken, (req, res) => {
   });
 });
 // اضافه کردن Resend در بالای فایل (بعد از سایر importها)
-const { Resend } = require('resend');
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 // POST /api/forgot-password → درخواست بازیابی رمز عبور
