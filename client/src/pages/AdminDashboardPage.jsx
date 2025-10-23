@@ -36,10 +36,10 @@ export default function AdminDashboardPage() {
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/admin/login');
-  };
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  navigate('/', { replace: true }); // ✅ رفتار صحیح
+};
 
   if (!user) return <div>در حال بارگذاری...</div>;
 

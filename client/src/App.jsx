@@ -325,10 +325,10 @@ function Dashboard() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
+  navigate('/', { replace: true }); // ✅ رفتار صحیح
+};
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
