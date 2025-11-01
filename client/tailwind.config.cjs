@@ -1,16 +1,24 @@
+// src/tailwind.config.js
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,jsx,ts,tsx}",
-  ],
-  safelist: [
-    'bg-red-100', 'border-red-500', 'text-red-800',
-    'bg-blue-100', 'border-blue-500', 'text-blue-800',
-    'bg-yellow-100', 'border-yellow-500', 'text-yellow-800'
-  ],
+  content: ["./index.html", "./src/**/*.{js,jsx,ts,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'medical-blue': '#0D4A6B',
+      'medical-blue-dark': '#1E567A',
+      'trust-green': '#2E8B57',
+      'light-bg': '#F8FAFC', // ✅ این خط باید وجود داشته باشه
+      },
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+      },
+    },
   },
-  plugins: [],
+  plugins: [
+    require("daisyui")
+  ],
+  daisyui: {
+    themes: false, // غیرفعال کردن تم‌های پیش‌فرض برای کنترل کامل
+  },
 }

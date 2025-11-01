@@ -2,7 +2,153 @@ import { useState, useEffect } from 'react';
 import { HashRouter, Routes, Route, Link, useNavigate, useParams } from 'react-router-dom';
 import api from './services/api';
 import './App.css';
+import { Outlet, useLocation } from 'react-router-dom';
 
+
+// --- PublicLayout: نمایش هدر/فوتر فقط برای صفحات عمومی ---
+function PublicLayout() {
+  const location = useLocation();
+  const isExcluded = [
+    '/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/admin/login',
+    '/cart'
+  ].some(path => location.pathname.startsWith(path)) || 
+  location.pathname.startsWith('/dashboard') ||
+  location.pathname.startsWith('/admin/');
+
+  if (isExcluded) {
+    return <Outlet />; // بدون هدر/فوتر
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-white">
+      <Header />
+      <main className="flex-grow"><Outlet /></main>
+      <Footer />
+    </div>
+  );
+}
+
+// --- Header (بدون Tailwind) ---
+function Header() {
+  const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user')) || null;
+  return (
+    <header className="app-header">
+      <div className="container">
+        <div 
+          className="logo"
+          onClick={() => navigate('/')}
+        >
+          مدی<span className="text-trust-green">شاپ</span>
+        </div>
+        <nav className="nav-menu">
+          <button 
+            onClick={() => navigate('/')}
+            className="nav-link"
+          >
+            صفحه اصلی
+          </button>
+          <button 
+            onClick={() => navigate('/products')}
+            className="nav-link"
+          >
+            محصولات
+          </button>
+          <button 
+            onClick={() => navigate('/about')}
+            className="nav-link"
+          >
+            درباره ما
+          </button>
+          <button 
+            onClick={() => navigate('/contact')}
+            className="nav-link"
+          >
+            تماس با ما
+          </button>
+        </nav>
+        <div className="header-actions">
+          <button 
+            onClick={() => navigate('/cart')}
+            className="cart-icon"
+            aria-label="سبد خرید"
+          >
+            🛒
+          </button>
+          {user ? (
+            <button 
+              onClick={() => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('user');
+                window.location.reload();
+              }}
+              className="logout-btn"
+            >
+              خروج
+            </button>
+          ) : (
+            <button 
+              onClick={() => navigate('/login')}
+              className="login-btn"
+            >
+              ورود
+            </button>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// --- Footer ---
+// --- Footer (بدون Tailwind) ---
+function Footer() {
+  return (
+    <footer className="app-footer">
+      <div className="container">
+        <div className="footer-grid">
+          <div className="footer-col">
+            <h3 className="footer-title">مدیشاپ</h3>
+            <p className="footer-text">
+              ارائه‌دهنده‌ی معتبر تجهیزات پزشکی با بیش از ۱۰ سال سابقه
+            </p>
+          </div>
+          <div className="footer-col">
+            <h4 className="footer-subtitle">لینک‌های سریع</h4>
+            <ul className="footer-links">
+              <li><button onClick={() => window.location.href='/'}>صفحه اصلی</button></li>
+              <li><button onClick={() => window.location.href='/products'}>محصولات</button></li>
+              <li><button onClick={() => window.location.href='/about'}>درباره ما</button></li>
+            </ul>
+          </div>
+          <div className="footer-col">
+            <h4 className="footer-subtitle">پشتیبانی</h4>
+            <ul className="footer-links">
+              <li><button onClick={() => window.location.href='/contact'}>تماس با ما</button></li>
+              <li><button>سوالات متداول</button></li>
+            </ul>
+          </div>
+          <div className="footer-col">
+            <h4 className="footer-subtitle">تماس</h4>
+            <address className="footer-contact">
+              تهران، خیابان ولیعصر<br />
+              ☎️ ۰۲۱-۱۲۳۴۵۶۷۸<br />
+              ✉️ info@medishop.ir
+            </address>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          © {new Date().getFullYear()} مدیشاپ. تمامی حقوق محفوظ است.
+        </div>
+      </div>
+    </footer>
+  );
+}
+// --- Home: صفحه اصلی با Hero Section لوکس ---
 function Home() {
   const [products, setProducts] = useState([]);
   const user = JSON.parse(localStorage.getItem('user')) || null;
@@ -27,39 +173,106 @@ function Home() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">فروشگاه تجهیزات پزشکی</h1>
-      {user && (
-  <button
-    onClick={() => {
-      if (user.role === 'admin') {
-        navigate('/admin/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
-    }}
-    className="mb-4 bg-blue-600 text-white px-4 py-2 rounded"
-  >
-    بازگشت به داشبورد
-  </button>
-)}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map(p => (
-          <div key={p.id} className="border p-4 rounded">
-            <h2 className="font-bold">{p.name}</h2>
-            <p>{p.description}</p>
-            <p className="text-green-600 font-bold">قیمت: {p.price} تومان</p>
-            <button
-              onClick={() => addToCart(p.id)}
-              className="mt-2 bg-green-600 text-white px-3 py-1 rounded text-sm"
-            >
-              افزودن به سبد
-            </button>
-          </div>
-        ))}
+  <div className="bg-light-bg pt-16">
+    {/* Hero Section */}
+    <div className="bg-red-500 text-white p-6 text-2xl">
+      اگر این قرمز نشد، Tailwind کار نمی‌کنه!
+    </div>
+    <div className="bg-gradient-to-r from-medical-blue to-medical-blue-dark text-white py-16 md:py-24">
+      <div className="container mx-auto px-4 text-center">
+        <h1 className="text-3xl md:text-5xl font-bold mb-4">تجهیزات پزشکی با کیفیت جهانی</h1>
+        <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto">
+          ارائه‌دهنده‌ی معتبر تجهیزات تشخیصی، آزمایشگاهی و بیمارستانی با گارانتی اصالت کالا
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
+          <button
+            onClick={() => navigate('/products')}
+            className="bg-trust-green hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition"
+          >
+            مشاهده محصولات
+          </button>
+          <button
+            onClick={() => navigate('/contact')}
+            className="bg-white text-medical-blue hover:bg-gray-100 font-bold py-3 px-8 rounded-lg text-lg transition"
+          >
+            تماس با ما
+          </button>
+        </div>
       </div>
     </div>
-  );
+
+    {/* Dashboard Button (if logged in) */}
+    {user && (
+      <div className="container mx-auto px-4 py-4">
+        <button
+          onClick={() => {
+            if (user.role === 'admin') {
+              navigate('/admin/dashboard');
+            } else {
+              navigate('/dashboard');
+            }
+          }}
+          className="mb-6 bg-medical-blue text-white px-5 py-2.5 rounded-lg hover:bg-medical-blue-dark transition"
+        >
+          بازگشت به داشبورد
+        </button>
+      </div>
+    )}
+
+    {/* Products Section */}
+    <div className="container mx-auto px-4 py-12">
+      <div className="text-center mb-10">
+        <h2 className="text-2xl md:text-3xl font-bold text-medical-blue mb-3">محصولات برگزیده</h2>
+        <p className="text-gray-600 max-w-2xl mx-auto">
+          مجموعه‌ای از بهترین تجهیزات پزشکی با کیفیت تأییدشده و گارانتی اصالت
+        </p>
+      </div>
+
+      {products.length === 0 ? (
+        <p className="text-center text-gray-600">محصولی برای نمایش وجود ندارد.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {products.map(p => (
+            <div
+              key={p.id}
+              className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300 border border-gray-100"
+            >
+              {p.image_url ? (
+                <img
+                  src={p.image_url}
+                  alt={p.name}
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/300x200?text=تصویر+محصول';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                  <span className="text-gray-400">بدون تصویر</span>
+                </div>
+              )}
+              <div className="p-5">
+                <h3 className="text-lg font-semibold text-medical-blue mb-2">{p.name}</h3>
+                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                  {p.description || 'توضیحاتی ثبت نشده است.'}
+                </p>
+                <p className="text-lg font-bold text-trust-green mb-3">
+                  {p.price?.toLocaleString()} تومان
+                </p>
+                <button
+                  onClick={() => addToCart(p.id)}
+                  className="w-full bg-medical-blue text-white py-2 rounded-lg hover:bg-medical-blue-dark transition"
+                >
+                  افزودن به سبد خرید
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+);
 }
 // کامپوننت تغییر رمز عبور
 function ResetPassword() {
@@ -1330,104 +1543,404 @@ function Cart() {
     </div>
   );
 }
-
-function AppContent() {
-  const [user, setUser] = useState(null);
-  const [loadingUser, setLoadingUser] = useState(true);
+// --- ProductsPage: صفحه لیست محصولات با استایل کامل ---
+function ProductsPage() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const validateAndSetUser = () => {
-      const storedUser = localStorage.getItem('user');
-      const storedToken = localStorage.getItem('token');
-      
-      // اگر هر دو وجود ندارن، کاربر مهمان هست
-      if (!storedUser || !storedToken) {
-        setUser(null);
-        setLoadingUser(false);
-        return;
-      }
-
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        
-        // اعتبارسنجی اولیه: چک کن فیلدهای ضروری وجود دارن
-        if (parsedUser.email && (parsedUser.role === 'user' || parsedUser.role === 'admin')) {
-          setUser(parsedUser);
-        } else {
-          // اگر داده نامعتبر بود، پاکش کن
-          localStorage.removeItem('user');
-          localStorage.removeItem('token');
-          setUser(null);
-        }
-      } catch (e) {
-        // اگر JSON نامعتبر بود، پاکش کن
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
-        setUser(null);
-      }
-      
-      setLoadingUser(false);
-    };
-
-    validateAndSetUser();
-
-    // نظارت بر تغییرات در تب‌های دیگه
-    const handleStorageChange = () => {
-      validateAndSetUser();
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    console.log('Fetching products...');
+    api('/products')
+      .then(data => {
+        console.log('Products data:', data);
+        setProducts(data);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error('Error loading products:', err);
+        setLoading(false);
+      });
   }, []);
 
-  if (loadingUser) {
-    return <div className="p-6">در حال بارگذاری...</div>;
+  const viewDetails = (id) => {
+    navigate(`/product/${id}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p className="text-medical-blue">در حال بارگذاری محصولات...</p>
+      </div>
+    );
   }
 
   return (
-    <div className="p-6">
-      <nav className="mb-6">
-        <Link to="/" className="mr-2">خانه</Link>
-        {' - '}
-        <Link to="/cart" className="mr-2">سبد خرید</Link>
-        {!user ? (
-          <>
-            {' - '}
-            <Link to="/login" className="mr-2">ورود</Link>
-            {' - '}
-            <Link to="/register" className="mr-2">ثبت‌نام</Link>
-          </>
-        ) : (
-          <>
-            {' - '}
-            <Link to="/dashboard">داشبورد</Link>
-          </>
-        )}
-      </nav>
-
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/admin/categories" element={<CategoryManager />} />
-        <Route path="/admin/categories/add" element={<AddCategory />} />
-        <Route path="/admin/add-product" element={<AddProduct />} />
-        <Route path="/admin/products" element={<ProductManager />} />
-        <Route path="/admin/products/edit/:id" element={<EditProduct />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:token" element={<ResetPassword />} />
-      </Routes>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold text-medical-blue mb-8 text-center">محصولات</h1>
+      {products.length === 0 ? (
+        <p className="text-center text-gray-600">محصولی برای نمایش وجود ندارد.</p>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {products.map(product => (
+            <div
+              key={product.id}
+              className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow duration-300"
+            >
+              {product.image_url ? (
+                <img
+                  src={product.image_url}
+                  alt={product.name}
+                  className="w-full h-48 object-cover"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/300x200?text=تصویر+محصول';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                  <span className="text-gray-400">بدون تصویر</span>
+                </div>
+              )}
+              <div className="p-5">
+                <h2 className="text-xl font-semibold text-medical-blue mb-2">{product.name}</h2>
+                <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+                  {product.description || 'توضیحاتی برای این محصول ثبت نشده است.'}
+                </p>
+                <p className="text-lg font-bold text-trust-green mb-4">
+                  {product.price?.toLocaleString()} تومان
+                </p>
+                <button
+                  onClick={() => viewDetails(product.id)}
+                  className="w-full bg-medical-blue text-white py-2 rounded-lg hover:bg-medical-blue-dark transition"
+                >
+                  مشاهده جزئیات
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
+// --- ProductDetail: صفحه جزئیات محصول ---
+// --- ProductDetail: صفحه جزئیات محصول (بدون Tailwind) ---
+function ProductDetail() {
+  const { id } = useParams();
+  const [product, setProduct] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    setLoading(true);
+    // دریافت محصول + دسته‌بندی
+    Promise.all([
+      api(`/products/${id}`),
+      api('/categories')
+    ])
+      .then(([productData, categoriesData]) => {
+        const category = categoriesData.find(c => c.id == productData.category_id);
+        setProduct({
+          ...productData,
+          category_name: category ? category.name : 'نامشخص'
+        });
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('محصول مورد نظر یافت نشد.');
+        setLoading(false);
+      });
+  }, [id]);
+
+  const addToCart = async () => {
+    try {
+      await api('/cart', {
+        method: 'POST',
+        body: JSON.stringify({ product_id: id, quantity: 1 })
+      });
+      alert('محصول به سبد خرید اضافه شد!');
+    } catch (err) {
+      alert('خطا: ' + err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p className="text-medical-blue">در حال بارگذاری جزئیات محصول...</p>
+      </div>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center">
+        <p className="text-red-600">{error}</p>
+        <button
+          onClick={() => navigate('/products')}
+          className="mt-4 text-medical-blue hover:underline"
+        >
+          بازگشت به لیست محصولات
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-8">
+      <button
+        onClick={() => navigate('/products')}
+        className="mb-6 text-medical-blue hover:underline flex items-center"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        بازگشت به لیست محصولات
+      </button>
+
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+        <div className="md:flex">
+          <div className="md:w-1/2 p-6 flex items-center justify-center">
+            {product.image_url ? (
+              <img
+                src={product.image_url}
+                alt={product.name}
+                className="max-w-full h-auto rounded-lg shadow-md"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/400x400?text=تصویر+محصول';
+                }}
+              />
+            ) : (
+              <div className="w-full h-64 bg-gray-100 flex items-center justify-center rounded-lg">
+                <span className="text-gray-400">بدون تصویر</span>
+              </div>
+            )}
+          </div>
+          <div className="md:w-1/2 p-6">
+            <div className="mb-2">
+              <span className="text-sm text-trust-green font-medium">{product.category_name}</span>
+            </div>
+            <h1 className="text-2xl font-bold text-medical-blue mb-3">{product.name}</h1>
+            <p className="text-gray-700 mb-4 leading-relaxed">
+              {product.description || 'توضیحاتی برای این محصول ثبت نشده است.'}
+            </p>
+            <div className="mb-4">
+              <span className="text-xl font-bold text-trust-green">
+                {product.price?.toLocaleString()} تومان
+              </span>
+              {product.stock !== undefined && (
+                <div className="mt-2">
+                  <span className={`px-2 py-1 rounded text-sm ${
+                    product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {product.stock > 0 ? `موجود در انبار (${product.stock})` : 'ناموجود'}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={addToCart}
+                disabled={product.stock === 0}
+                className={`flex-1 py-3 px-4 rounded-lg font-medium text-white transition ${
+                  product.stock === 0
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-medical-blue hover:bg-medical-blue-dark'
+                }`}
+              >
+                {product.stock === 0 ? 'ناموجود' : 'افزودن به سبد خرید'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// --- AboutPage: درباره ما ---
+function AboutPage() {
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-bold text-medical-blue mb-8 text-center">درباره مدیشاپ</h1>
+        
+        <div className="bg-white rounded-xl shadow-sm p-6 md:p-8 mb-8 border border-gray-100">
+          <p className="text-gray-700 text-lg leading-relaxed mb-6">
+            مدیشاپ با بیش از ۱۰ سال سابقه درخشان در حوزه تأمین تجهیزات پزشکی، 
+            همواره متعهد به ارائه‌ی محصولاتی با کیفیت جهانی، گارانتی اصالت کالا و پشتیبانی حرفه‌ای بوده است.
+          </p>
+          <p className="text-gray-700 text-lg leading-relaxed mb-6">
+            ما با همکاری مستقیم با تولیدکنندگان معتبر اروپایی و آمریکایی، 
+            طیف گسترده‌ای از تجهیزات تشخیصی، آزمایشگاهی، بیمارستانی و خانگی را 
+            با ضمانت کیفیت و خدمات پس از فروش ارائه می‌دهیم.
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+            <div className="text-center p-4">
+              <div className="text-trust-green text-3xl font-bold">۱۰+</div>
+              <div className="text-gray-600">سال سابقه</div>
+            </div>
+            <div className="text-center p-4">
+              <div className="text-trust-green text-3xl font-bold">۵۰۰+</div>
+              <div className="text-gray-600">محصول فعال</div>
+            </div>
+            <div className="text-center p-4">
+              <div className="text-trust-green text-3xl font-bold">۹۸%</div>
+              <div className="text-gray-600">رضایت مشتریان</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// --- ContactPage: تماس با ما ---
+function ContactPage() {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setSuccess('');
+    
+    // ⚠️ نکته: اینجا فقط UI تماس ساخته شده.
+    // برای ارسال واقعی، باید API مربوطه رو فراخوانی کنی.
+    setTimeout(() => {
+      setSuccess('پیام شما با موفقیت ارسال شد. کارشناسان ما به زودی با شما تماس خواهند گرفت.');
+      setName('');
+      setEmail('');
+      setMessage('');
+      setSubmitting(false);
+    }, 1000);
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-12">
+      <div className="max-w-6xl mx-auto">
+        <h1 className="text-3xl md:text-4xl font-bold text-medical-blue mb-8 text-center">تماس با ما</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* فرم تماس */}
+          <div className="bg-white rounded-xl shadow-sm p-6 md:p-8 border border-gray-100">
+            <h2 className="text-2xl font-semibold text-medical-blue mb-6">ارسال پیام</h2>
+            {success && (
+              <div className="mb-4 p-3 bg-green-100 text-green-700 rounded">
+                {success}
+              </div>
+            )}
+            <form onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">نام و نام خانوادگی</label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:outline-none"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-gray-700 mb-2">ایمیل</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:outline-none"
+                  required
+                />
+              </div>
+              <div className="mb-6">
+                <label className="block text-gray-700 mb-2">پیام شما</label>
+                <textarea
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  rows="5"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-medical-blue focus:outline-none"
+                  required
+                ></textarea>
+              </div>
+              <button
+                type="submit"
+                disabled={submitting}
+                className={`w-full py-3 px-4 rounded-lg font-medium text-white ${
+                  submitting ? 'bg-gray-400' : 'bg-medical-blue hover:bg-medical-blue-dark'
+                } transition`}
+              >
+                {submitting ? 'در حال ارسال...' : 'ارسال پیام'}
+              </button>
+            </form>
+          </div>
+
+          {/* اطلاعات تماس */}
+          <div className="bg-white rounded-xl shadow-sm p-6 md:p-8 border border-gray-100">
+            <h2 className="text-2xl font-semibold text-medical-blue mb-6">اطلاعات تماس</h2>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="font-medium text-gray-800 mb-2">آدرس دفتر مرکزی</h3>
+                <p className="text-gray-600">تهران، خیابان ولیعصر، بالاتر از میدان ونک، پلاک ۱۲۳</p>
+              </div>
+              
+              <div>
+                <h3 className="font-medium text-gray-800 mb-2">شماره‌های تماس</h3>
+                <p className="text-gray-600">☎️ ۰۲۱-۱۲۳۴۵۶۷۸</p>
+                <p className="text-gray-600">📱 ۰۹۱۲-۱۲۳۴۵۶۷ (واتساپ)</p>
+              </div>
+              
+              <div>
+                <h3 className="font-medium text-gray-800 mb-2">ایمیل</h3>
+                <p className="text-gray-600">✉️ info@medishop.ir</p>
+                <p className="text-gray-600">✉️ support@medishop.ir</p>
+              </div>
+              
+              <div>
+                <h3 className="font-medium text-gray-800 mb-2">ساعات کاری</h3>
+                <p className="text-gray-600">شنبه تا چهارشنبه: ۸ صبح تا ۶ بعدازظهر</p>
+                <p className="text-gray-600">پنجشنبه: ۸ صبح تا ۲ بعدازظهر</p>
+                <p className="text-gray-600">جمعه: تعطیل</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+// --- PublicLayout و کامپوننت‌هایش همان‌طور باقی بمانند ---
+
+// ... (بقیه کامپوننت‌ها مثل Home, ProductsPage, ... بدون تغییر)
+
+// ✅ تابع App جدید (بدون AppContent)
 function App() {
   return (
     <HashRouter>
-      <AppContent />
+      <Routes>
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Home />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+        </Route>
+        {/* صفحات خصوصی — بدون تغییر */}
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/products" element={<ProductManager />} />
+        <Route path="/admin/products/edit/:id" element={<EditProduct />} />
+        <Route path="/admin/add-product" element={<AddProduct />} />
+        <Route path="/admin/categories" element={<CategoryManager />} />
+        <Route path="/admin/categories/add" element={<AddCategory />} />
+      </Routes>
     </HashRouter>
   );
 }

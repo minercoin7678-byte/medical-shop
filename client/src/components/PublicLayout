@@ -1,0 +1,92 @@
+// src/components/PublicLayout.jsx
+import { Outlet, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
+
+export default function PublicLayout() {
+  const location = useLocation();
+
+  // اسکرول به بالا هنگام تغییر صفحه
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  return (
+    <div className="flex flex-col min-h-screen bg-white">
+      <Header />
+      <main className="flex-grow">
+        <Outlet /> {/* اینجا صفحات مثل Home, Products قرار می‌گیرن */}
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+// --- Header ---
+function Header() {
+  return (
+    <header className="bg-white shadow-sm sticky top-0 z-50 border-b border-gray-100">
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="text-xl font-bold text-medical-blue">
+          مدی<span className="text-trust-green">شاپ</span>
+        </div>
+
+        <nav className="hidden md:flex space-x-6 rtl:space-x-reverse">
+          <a href="/" className="text-medical-blue hover:text-medical-blue-dark font-medium transition">صفحه اصلی</a>
+          <a href="/products" className="text-medical-blue hover:text-medical-blue-dark font-medium transition">محصولات</a>
+          <a href="/about" className="text-medical-blue hover:text-medical-blue-dark font-medium transition">درباره ما</a>
+          <a href="/contact" className="text-medical-blue hover:text-medical-blue-dark font-medium transition">تماس با ما</a>
+        </nav>
+
+        <div className="flex items-center space-x-4 rtl:space-x-reverse">
+          <button className="text-medical-blue hover:text-medical-blue-dark">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+// --- Footer ---
+function Footer() {
+  return (
+    <footer className="bg-medical-blue text-white py-8 mt-12">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div>
+            <h3 className="text-xl font-bold mb-3">مدیشاپ</h3>
+            <p className="text-blue-100 text-sm">ارائه‌دهنده‌ی معتبر تجهیزات پزشکی با بیش از ۱۰ سال سابقه</p>
+          </div>
+          <div>
+            <h4 className="font-medium mb-3">لینک‌های سریع</h4>
+            <ul className="space-y-2 text-blue-100 text-sm">
+              <li><a href="/" className="hover:text-white transition">صفحه اصلی</a></li>
+              <li><a href="/products" className="hover:text-white transition">محصولات</a></li>
+              <li><a href="/about" className="hover:text-white transition">درباره ما</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-medium mb-3">پشتیبانی</h4>
+            <ul className="space-y-2 text-blue-100 text-sm">
+              <li><a href="/contact" className="hover:text-white transition">تماس با ما</a></li>
+              <li><button className="hover:text-white transition">سوالات متداول</button></li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="font-medium mb-3">تماس</h4>
+            <address className="not-italic text-blue-100 text-sm">
+              تهران، خیابان ولیعصر<br />
+              ☎️ ۰۲۱-۱۲۳۴۵۶۷۸<br />
+              ✉️ info@medishop.ir
+            </address>
+          </div>
+        </div>
+        <div className="border-t border-blue-900 mt-8 pt-6 text-center text-blue-200 text-sm">
+          © {new Date().getFullYear()} مدیشاپ. تمامی حقوق محفوظ است.
+        </div>
+      </div>
+    </footer>
+  );
+}
